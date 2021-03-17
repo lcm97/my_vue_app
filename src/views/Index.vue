@@ -72,7 +72,7 @@
                             已参团{{item.num}}人,还差2人进阶成3人团
                         </div>
                     </div>
-                    <div class="button_right">去参团</div>
+                    <div class="button_right" v-on:click="joinGroup(item)">去参团</div>
                  </div>
 
              </div>
@@ -104,7 +104,7 @@
                             <span class="price">¥{{item.price}}</span>
                             <span class="origin_price">¥{{item.origin_price}}</span>
                         </div>
-                        <div class="button_bottom">立即参团</div>
+                        <div class="button_bottom" @click="openGroup(item)">立即开团</div>
                     </div>
                 </div>
             </div>
@@ -304,6 +304,21 @@ export default {
       this.isplay = !this.isplay
       const m = document.getElementById('music')
        	this.isplay ? m.play() : m.pause()
+    },
+
+    joinGroup(item){
+        console.log(item.id)
+        this.$router.push({ 
+            name: 'Register', 
+            query: { group_id: item.id }
+        })
+    },
+    openGroup(item){
+        console.log(item)
+        this.$router.push({ 
+            name: 'Register', 
+            query: { course_id: item.id }
+        })
     }
   }
 }
