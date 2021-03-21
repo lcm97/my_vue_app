@@ -48,12 +48,12 @@
         <!--组团信息-->
         <div class="group_board">
              <!--搜索按钮-->
-             <div class="search_group">
+             <div class="search_group" v-on:click="showDialog = true">
                 <div style="font-size:15px;color:black;margin-right:5px">点击去搜索更多团</div>
                 <van-icon name="search" size="17" color="#4699f5"/>
              </div>
              <!--开团项目-->
-             <div class="group_items" v-for="item in group_infos" :key="item.id">
+             <div class="group_items" v-for="item in group_list" :key="item.id">
                  <div class="group_item">
                     <van-image
                     round
@@ -61,11 +61,11 @@
                     height="62px"
                     fit="cover"
                     lazy-load
-                    :src="item.img"
+                    :src="item.avatar"
                     />
                     <div class="middle_info">
                         <div class="info_up">
-                            <div style="font-size:13px">{{item.name}}</div>
+                            <div style="font-size:13px">{{item.cap_name}}</div>
                             <div style="font-size:13px">团号：{{item.id}}</div>
                         </div>
                         <div class="info_down">
@@ -77,6 +77,55 @@
 
              </div>
         </div>
+
+
+        <!--组队弹窗-->
+        <van-dialog v-model:show="showDialog" 
+            title="更多附近的团" 
+            show-cancel-button 
+            :showConfirmButton= false 
+            width="96%" 
+            class="group_dialog">
+
+            <van-search
+                v-model="value"
+                show-action
+                background="#fd7f2a"
+                placeholder="团长姓名/团编号"
+                @search="onSearch"
+                >
+                <template #action>
+                    <div @click="onSearch">搜索</div>
+                </template>
+            </van-search>
+             <div class="group_items" v-for="item in group_list" :key="item.id">
+                 <div class="group_item">
+                    <van-image
+                    round
+                    width="62px"
+                    height="62px"
+                    fit="cover"
+                    lazy-load
+                    :src="item.avatar"
+                    />
+                    <div class="middle_info">
+                        <div class="info_up">
+                            <div style="font-size:13px">{{item.cap_name}}</div>
+                            <div style="font-size:13px">团号：{{item.id}}</div>
+                        </div>
+                        <div class="info_down">
+                            已参团{{item.num}}人,还差2人进阶成3人团
+                        </div>
+                    </div>
+                    <div class="button_right" v-on:click="joinGroup(item)">去参团</div>
+                 </div>
+
+             </div>
+
+             <van-pagination v-model="groupQuery.page" mode="simple" :page-count="page_count"  style="color:black"/>
+            
+
+        </van-dialog>
 
         <!--活动详情面板-->
         <div class="detail_board">活动详情</div>
@@ -170,6 +219,7 @@
 
 <script>
 import { fetchList, fetchCompanyList, createCourse, updateCourse, removeCourse, refreshCourse, draftCourse, publishCourse } from '@/api/course'
+import { fetchGroupList } from '@/api/group'
 export default {
   name: 'Index',
   data () {
@@ -181,6 +231,15 @@ export default {
             name: undefined,
             company: undefined
       },
+      groupQuery:{
+            page: 1,
+            limit: 5,
+            cap_name: undefined,
+            cap_id: undefined,
+            link_id: undefined,
+      },
+      total: 0,
+      page_count: 12,
       msg: '这是我的第一个VUE网页',
       isplay: false,
       images: [
@@ -196,36 +255,7 @@ export default {
 
       time_diff: 30 * 60 * 60 * 1000, // 倒计时间差
 
-      group_infos: [ // 使用computer属性计算进阶还需参团人数
-        {
-          img: 'https://img01.yzcdn.cn/vant/cat.jpeg',
-          name: '钟梓建',
-          id: 791523,
-          type: 1, // 组团人数类型
-          num: 1 // 参团人数
-        },
-        {
-          img: 'https://img01.yzcdn.cn/vant/cat.jpeg',
-          name: '钟梓建',
-          id: 791524,
-          type: 1, // 组团人数类型
-          num: 1 // 参团人数
-        },
-        {
-          img: 'https://img01.yzcdn.cn/vant/cat.jpeg',
-          name: '钟梓建',
-          id: 791525,
-          type: 1, // 组团人数类型
-          num: 1 // 参团人数
-        },
-        {
-          img: 'https://img01.yzcdn.cn/vant/cat.jpeg',
-          name: '钟梓建',
-          id: 791526,
-          type: 1, // 组团人数类型
-          num: 1 // 参团人数
-        }
-      ],
+      group_list: [], // 使用computer属性计算进阶还需参团人数
       course_list:[{
           id:1,
           img: "https://img.yzcdn.cn/vant/cat.jpeg",
@@ -298,7 +328,8 @@ export default {
               ]
 
           }
-      ]
+      ],
+      showDialog: false,
 
     }
   },
@@ -307,23 +338,31 @@ export default {
 
   },
   created() {
-        this.testaxios()
+        this.getGroupList()
   },
   methods: {
-    testaxios: function(){
-        var userInfo = {
-            name: '张三',
-            avatar: '123',
-        }
-        this.$store.dispatch('user/setInfo', userInfo).then(() => { //'user/login'为vues store文件夹下的方法名
-            fetchList(this.listQuery).then(response => {
-                console.log(response.data.items)
-            })
-        }).catch(() => {
-
-        })
+    getGroupList(){
+        fetchGroupList(this.groupQuery).then(response => {
+            this.group_list = response.data.items //修改ToDo
+            this.total = response.data.total
+            this.page_count = Math.ceil(this.total / 5)
+        })    
 
     },
+    // testaxios: function(){
+    //     var userInfo = {
+    //         name: '张三',
+    //         avatar: '123',
+    //     }
+    //     this.$store.dispatch('user/setInfo', userInfo).then(() => { //'user/login'为vues store文件夹下的方法名
+    //         fetchList(this.listQuery).then(response => {
+    //             console.log(response.data.items)
+    //         })
+    //     }).catch(() => {
+
+    //     })
+
+    // },
     playmusic: function (event) {
       this.isplay = !this.isplay
       const m = document.getElementById('music')
@@ -616,6 +655,9 @@ export default {
       border-radius: 12%;
 
   }
+  .group_dialog{
+  }
+
   .blue_line{
       height: 24px;
       background-color: #4699f5;
