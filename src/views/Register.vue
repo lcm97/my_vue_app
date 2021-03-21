@@ -148,8 +148,12 @@ export default {
   props: {},
   created() {
         this.getGroupItem()
+        this.testvues()
   },
   methods: {
+      testvues(){
+          console.log(this.$store.getters.name)
+      },
       getGroupItem(){
           console.log(this.$route.query.group_id)
       },

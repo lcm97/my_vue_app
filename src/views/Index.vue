@@ -169,11 +169,18 @@
 </template>
 
 <script>
-
+import { fetchList, fetchCompanyList, createCourse, updateCourse, removeCourse, refreshCourse, draftCourse, publishCourse } from '@/api/course'
 export default {
   name: 'Index',
   data () {
     return {
+      listQuery: {
+            page: 1,
+            limit: 10,
+
+            name: undefined,
+            company: undefined
+      },
       msg: '这是我的第一个VUE网页',
       isplay: false,
       images: [
@@ -299,7 +306,24 @@ export default {
   props: {
 
   },
+  created() {
+        this.testaxios()
+  },
   methods: {
+    testaxios: function(){
+        var userInfo = {
+            name: '张三',
+            avatar: '123',
+        }
+        this.$store.dispatch('user/setInfo', userInfo).then(() => { //'user/login'为vues store文件夹下的方法名
+            fetchList(this.listQuery).then(response => {
+                console.log(response.data.items)
+            })
+        }).catch(() => {
+
+        })
+
+    },
     playmusic: function (event) {
       this.isplay = !this.isplay
       const m = document.getElementById('music')
