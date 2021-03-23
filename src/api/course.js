@@ -79,3 +79,11 @@ export function fetchCoursebyLink(link_id) {
         params: { link_id }
     })
 }
+
+export function fetchCoursebyComName(query) {
+    return request({
+        url: '/course/listbyname',
+        method: 'get',
+        params: query
+    })
+}

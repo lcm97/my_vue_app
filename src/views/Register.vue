@@ -4,7 +4,7 @@
     <van-image width="100%" height="200" :src="require('../assets/comealong.png')" />
     <!--表单-->
     <div class="form">
-        <van-form >
+        <van-form ref="dataForm" >
         <van-field
             v-model="state.name"
             name="姓名"
@@ -61,7 +61,7 @@
         />
         <van-popup v-model:show="formState.showCompany" position="bottom">
             <van-picker
-                :columns="companyList"
+                :columns="company_list"
                 :columns-field-names="{text:'name'}"
                 @confirm="onCompanyConfirm"
                 @cancel="formState.showCompany = false"
@@ -72,14 +72,16 @@
             <div
              class="info"
             >请选择报名课程</div>
-            <van-radio-group v-model="state.course" class="courses" @change="onCourseChange">
-                <van-radio v-for="item in courseList" :key="item.id" 
+            <van-radio-group v-model="state.course" class="courses" >
+                <van-radio v-for="item in course_list" :key="item.id" 
                 :name="item.name" 
                 icon-size="15px" 
-                class="item">{{item.name}}
+                class="item"
+                @click="onCourseChange(item)"
+                >{{item.name}}
                 </van-radio>
             </van-radio-group>
-            <div class="price_info">微信支付：<span style="color:red;">168.00元</span></div>
+            <div class="price_info">微信支付：<span style="color:red;">{{state.price}}元</span></div>
         </div>
         </van-form>
     </div>
@@ -89,13 +91,16 @@
 </div>
 <div style="position: fixed;bottom: 0;width: 100%;display: flex;flex-direction: row;">
     <div class="toindex" @click="toIndex">返回首页</div>
-    <div class="tojoin" @click="toPay">立即报名</div>
+    <div class="tojoin" @click="toPay">{{formState.map}}</div>
 </div>
 
     
 </template>
 
 <script>
+import { fetchCompanybyLink} from '@/api/company'
+import { fetchCoursebyComName} from '@/api/course'
+import { Dialog } from 'vant';
 export default {
   name: 'Register',
   data () {
@@ -105,30 +110,8 @@ export default {
         '20','21','22','23','24','25','26','27','28','29',
         '30','31','32','33','34','35','36','37','38','39',
         '40','41','42','43','44','45','46','47','48','49','50'],
-        companyList:[{
-            id:1,
-            name:'德州教育'
-        },{
-            id:2,
-            name:'翔太体育'
-        },{
-            id:3,
-            name:'智慧教育'
-        }
-
-        ],
-        courseList:[{
-            id:1,
-            name:'功夫明星跆拳道1'
-        },{
-            id:2,
-            name:'功夫明星跆拳道2'
-        },{
-            id:3,
-            name:'功夫明星跆拳道3'
-        }
-
-        ],
+        company_list:[],
+        course_list:[],
         state:{
             name:'', //学生真实姓名
             phone:'', //学生联系方式
@@ -136,27 +119,45 @@ export default {
             identity: '新生',
             company:'',//机构
             course:'',//项目
+            price:undefined,//需要支付
         },
         formState:{
             showAges: false,
             showCompany: false,
-            
-        }
+            map:''
+        },
     }
   },
   components: {},
   props: {},
   created() {
         this.getGroupItem()
-        this.testvues()
+        this.getCompanyList()
   },
   methods: {
-      testvues(){
-          console.log(this.$store.getters.name)
-      },
       getGroupItem(){
+          if(this.$route.query.group_id){
+              this.formState.map = '立即参团'
+          }else{
+              this.formState.map = '立即开团'
+          }
           console.log(this.$route.query.group_id)
+          console.log(this.$store.getters.openid)
+          console.log(this.$store.getters.link_id)
       },
+      getCompanyList(){
+        //this.link_id = 0
+        fetchCompanybyLink(this.$store.getters.link_id).then(response => {
+            this.company_list = response.data.items 
+            this.state.company = response.data.items[0].name //默认取第一个
+            let query = {link_id:this.$store.getters.link_id,company:this.state.company}
+            fetchCoursebyComName(query).then(response=>{
+                this.course_list = response.data.items 
+                this.state.course = this.course_list[0].name
+                this.state.price = this.course_list[0].price
+            })
+        })    
+    },
       onAgeConfirm(val){
           this.state.age = val
           this.formState.showAges = false
@@ -164,21 +165,53 @@ export default {
       onCompanyConfirm(val){
           this.state.company = val.name
           this.formState.showCompany = false
-          //ToDo更新课程列表
+          //ToDo更新课程列表 根据link_id 和 课程名字来加载课程列表
+          let query = {link_id:this.$store.getters.link_id,company:this.state.company}
+            fetchCoursebyComName(query).then(response=>{
+                this.course_list = response.data.items 
+                this.state.course = this.course_list[0].name
+                this.state.price = this.course_list[0].price
+          })
+
       },
       onIdetityChange(val){
           this.state.identity = val
       },
-      onCourseChange(val){
-          console.log(val)
-          this.state.course = val
+      onCourseChange(item){
+          this.state.course = item.name
+          this.state.price = item.price
 
       },
       toIndex(){
           this.$router.push({ name: 'Index', })
       },
       toPay(){
-          console.log('支付现金')
+            this.$refs['dataForm'].validate().then(()=>{
+                Dialog.confirm({
+                    title: '标题',
+                    message: '支付现金',
+                    })
+                    .then(() => {
+                        console.log('支付成功')
+                        //判断是参团还是建团
+                        if(this.$route.query.group_id){ //参团
+                            console.log(this.$route.query.group_id)
+                            
+
+
+                        }else{
+
+                        }
+
+                    })
+                    .catch(() => {
+                        // on cancel
+                        console.log('支付失败')
+                });
+            }).catch(()=>{
+
+            })
+
       },
 
       onSubmit(val){
@@ -225,7 +258,7 @@ export default {
     margin-bottom: 10px;
 }
 .item{
-    margin: 0.5rem;
+    margin: 0.7rem;
     font-size: 0.9rem;
 }
 .price_info{

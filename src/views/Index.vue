@@ -167,12 +167,12 @@
         <div class="welfare_list" v-for="(item,index) in welfare_list" :key="index">
             <div class="welfare_item">
                 <div class="search_group">
-                    <div style="font-size:15px;color:black;margin-right:5px">{{item.name}}</div>
+                    <div style="font-size:15px;color:black;margin-right:5px">{{item.title}}</div>
                 </div>
                 <div class="welfare_detail">
-                    <div style="margin:8px">{{item.detail}}</div>
+                    <div style="margin:8px">{{item.describe}}</div>
                 </div>
-                <div class="welfare_imgs" v-for="(img,idx) in item.imgs" :key="idx">
+                <div class="welfare_imgs" v-for="(img,idx) in item.imglist" :key="idx">
                     <van-image style="width:94%;margin-bottom:10px" fit="cover" lazy-load :src="img" />
                 </div>
 
@@ -224,7 +224,9 @@
 import { fetchCompanybyLink} from '@/api/company'
 import { fetchCoursebyLink } from '@/api/course'
 import { fetchGroupList } from '@/api/group'
+import { fetchWelfareList} from '@/api/welfare'
 import { isNumber} from '@/utils/validate'
+import { findorCreate} from '@/api/user'
 export default {
   name: 'Index',
   data () {
@@ -264,24 +266,7 @@ export default {
 
       group_list: [], // 使用computer属性计算进阶还需参团人数
       course_list:[],
-      welfare_list:[
-          {
-              name:"福利标题",
-              detail: "福利描述文字福利描述文字福利描述文字福利描述文字福利描述文字福利描述文字福利描述文字福利描述文字福利描述文字福利描述文字福利描述文字",
-              imgs:[
-                  "https://img.yzcdn.cn/vant/cat.jpeg",
-                  "https://img.yzcdn.cn/vant/cat.jpeg"
-              ]
-          },
-          {
-              name:"福利标题",
-              detail: "福利描述文字福利描述文字福利描述文字福利描述文字福利描述文字福利描述文字福利描述文字福利描述文字福利描述文字福利描述文字福利描述文字",
-              imgs:[
-                  "https://img.yzcdn.cn/vant/cat.jpeg",
-                  "https://img.yzcdn.cn/vant/cat.jpeg"
-              ]
-          }
-      ],
+      welfare_list:[],
       company_list:[],
       showDialog: false,
 
@@ -292,11 +277,30 @@ export default {
 
   },
   created() {
+        this.setUserInfo()
+
         this.getGroupList()
         this.getCourseList()
         this.getCompanyList()
+        this.getWelfareList()
   },
   methods: {
+    setUserInfo(){
+        var userInfo = {
+            openid: '123',
+            avatar: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
+        }
+        findorCreate(userInfo).then(response =>{
+            var [user, created] = response.data
+            console.log(user)
+            console.log(created)
+        })
+
+        let link_id = 0
+        this.$store.dispatch('user/setInfo', userInfo)
+        this.$store.dispatch('user/setLinkId', link_id)
+
+    },
     getGroupList(){
         fetchGroupList(this.groupQuery).then(response => {
             this.group_list = response.data.items 
@@ -317,7 +321,11 @@ export default {
             //console.log(response.data.items)
             this.company_list = response.data.items 
         })    
-
+    },
+    getWelfareList(){
+        fetchWelfareList().then(response =>{
+            this.welfare_list = response.data.items
+        })
     },
     onSearch(val){
         if(isNumber(val)){
@@ -334,20 +342,6 @@ export default {
         this.groupQuery.page = 1
         this.getGroupList() 
     },
-    // testaxios: function(){
-    //     var userInfo = {
-    //         name: '张三',
-    //         avatar: '123',
-    //     }
-    //     this.$store.dispatch('user/setInfo', userInfo).then(() => { //'user/login'为vues store文件夹下的方法名
-    //         fetchList(this.listQuery).then(response => {
-    //             console.log(response.data.items)
-    //         })
-    //     }).catch(() => {
-
-    //     })
-
-    // },
     playmusic: function (event) {
       this.isplay = !this.isplay
       const m = document.getElementById('music')

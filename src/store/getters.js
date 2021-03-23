@@ -1,6 +1,9 @@
+import { useLink } from "vue-router"
+
 const getters = {
     token: state => state.user.token,
     avatar: state => state.user.avatar,
-    name: state => state.user.name
+    openid: state => state.user.openid,
+    link_id: state => state.user.link_id
 }
 export default getters
