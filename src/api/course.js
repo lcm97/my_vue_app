@@ -71,3 +71,11 @@ export function publishCourse(id) {
         params: { id }
     })
 }
+
+export function fetchCoursebyLink(link_id) {
+    return request({
+        url: '/course/listbyid',
+        method: 'get',
+        params: { link_id }
+    })
+}

@@ -85,17 +85,18 @@
             show-cancel-button 
             :showConfirmButton= false 
             width="96%" 
+            @cancel="onCancel"
             class="group_dialog">
 
             <van-search
-                v-model="value"
+                v-model="search_val"
                 show-action
                 background="#fd7f2a"
                 placeholder="团长姓名/团编号"
                 @search="onSearch"
                 >
                 <template #action>
-                    <div @click="onSearch">搜索</div>
+                    <div @click="onSearch(search_val)">搜索</div>
                 </template>
             </van-search>
              <div class="group_items" v-for="item in group_list" :key="item.id">
@@ -122,7 +123,7 @@
 
              </div>
 
-             <van-pagination v-model="groupQuery.page" mode="simple" :page-count="page_count"  style="color:black"/>
+             <van-pagination v-model="groupQuery.page" mode="simple" :page-count="page_count"  style="color:black" @change="getGroupList"/>
             
 
         </van-dialog>
@@ -151,7 +152,7 @@
                         <div class="prices">
                             <span class="price_board">现价</span>
                             <span class="price">¥{{item.price}}</span>
-                            <span class="origin_price">¥{{item.origin_price}}</span>
+                            <span class="origin_price">¥{{item.ori_price}}</span>
                         </div>
                         <div class="button_bottom" @click="openGroup(item)">立即开团</div>
                     </div>
@@ -184,7 +185,9 @@
                 <div style="font-size:18px;color:black;margin-right:5px">机构介绍</div>
             </div>
 
+
             <div class="company_list" v-for="(item,index) in company_list" :key="index">
+                <div class="company_name">{{item.name}}</div>
                 <span style="margin:10px;font-size:15px;text-align: left;">{{item.describe}}</span>
                 <div class="welfare_imgs" v-for="(img,idx) in item.imglist" :key="idx">
                     <van-image style="width:94%;margin-bottom:10px" fit="cover" lazy-load :src="img" />
@@ -218,8 +221,10 @@
 </template>
 
 <script>
-import { fetchList, fetchCompanyList, createCourse, updateCourse, removeCourse, refreshCourse, draftCourse, publishCourse } from '@/api/course'
+import { fetchCompanybyLink} from '@/api/company'
+import { fetchCoursebyLink } from '@/api/course'
 import { fetchGroupList } from '@/api/group'
+import { isNumber} from '@/utils/validate'
 export default {
   name: 'Index',
   data () {
@@ -238,6 +243,8 @@ export default {
             cap_id: undefined,
             link_id: undefined,
       },
+      link_id: undefined,
+      search_val: undefined,
       total: 0,
       page_count: 12,
       msg: '这是我的第一个VUE网页',
@@ -256,31 +263,7 @@ export default {
       time_diff: 30 * 60 * 60 * 1000, // 倒计时间差
 
       group_list: [], // 使用computer属性计算进阶还需参团人数
-      course_list:[{
-          id:1,
-          img: "https://img.yzcdn.cn/vant/cat.jpeg",
-          name:"功夫明星跆拳道",
-          price: 168.00,
-          origin_price: 200.00,
-          class:"6次12节"
-          },
-          {
-          id:2,
-          img: "https://img.yzcdn.cn/vant/cat.jpeg",
-          name:"功夫明星跆拳道",
-          price: 168.00,
-          origin_price: 200.00,
-          class:"6次12节"
-          },
-          {
-          id:3,
-          img: "https://img.yzcdn.cn/vant/cat.jpeg",
-          name:"功夫明星跆拳道",
-          price: 168.00,
-          origin_price: 200.00,
-          class:"6次12节"
-          }
-      ],
+      course_list:[],
       welfare_list:[
           {
               name:"福利标题",
@@ -299,36 +282,7 @@ export default {
               ]
           }
       ],
-      company_list:[
-          {
-              describe:'机构介绍机构介绍文字机构介绍文字机构介绍文字机构介绍文字机构介绍文字机构介绍文字',
-              imglist:[
-                  'https://img.yzcdn.cn/vant/cat.jpeg',
-                  'https://img.yzcdn.cn/vant/cat.jpeg'
-              ],
-              phone:13424354657,
-              address: '上海市普陀区金沙江路 1518 弄',
-              contacts:[
-                  'https://img.yzcdn.cn/vant/cat.jpeg',
-                  'https://img.yzcdn.cn/vant/cat.jpeg'                  
-              ]
-
-          },
-          {
-              describe:'机构介绍机构介绍文字机构介绍文字机构介绍文字机构介绍文字机构介绍文字机构介绍文字',
-              imglist:[
-                  'https://img.yzcdn.cn/vant/cat.jpeg',
-                  'https://img.yzcdn.cn/vant/cat.jpeg'
-              ],
-              phone:13424354657,
-              address: '上海市普陀区金沙江路 1518 弄',
-              contacts:[
-                  'https://img.yzcdn.cn/vant/cat.jpeg',
-                  'https://img.yzcdn.cn/vant/cat.jpeg'                  
-              ]
-
-          }
-      ],
+      company_list:[],
       showDialog: false,
 
     }
@@ -339,15 +293,46 @@ export default {
   },
   created() {
         this.getGroupList()
+        this.getCourseList()
+        this.getCompanyList()
   },
   methods: {
     getGroupList(){
         fetchGroupList(this.groupQuery).then(response => {
-            this.group_list = response.data.items //修改ToDo
+            this.group_list = response.data.items 
             this.total = response.data.total
             this.page_count = Math.ceil(this.total / 5)
         })    
+    },
+    getCourseList(){
+        this.link_id = 0
+        fetchCoursebyLink(this.link_id).then(response => {
+            //console.log(response.data.items)
+            this.course_list = response.data.items 
+        })    
+    },
+    getCompanyList(){
+        this.link_id = 0
+        fetchCompanybyLink(this.link_id).then(response => {
+            //console.log(response.data.items)
+            this.company_list = response.data.items 
+        })    
 
+    },
+    onSearch(val){
+        if(isNumber(val)){
+            this.groupQuery.cap_id = val
+        }else{
+            this.groupQuery.cap_name = val
+        }
+        this.groupQuery.page = 1
+        this.getGroupList() 
+    },
+    onCancel(){
+        this.groupQuery.cap_name = undefined
+        this.groupQuery.cap_id = undefined
+        this.groupQuery.page = 1
+        this.getGroupList() 
     },
     // testaxios: function(){
     //     var userInfo = {
@@ -655,9 +640,6 @@ export default {
       border-radius: 12%;
 
   }
-  .group_dialog{
-  }
-
   .blue_line{
       height: 24px;
       background-color: #4699f5;
@@ -706,16 +688,25 @@ export default {
       margin-bottom: 15px;
 
   }
+  .company_name{
+      font-size: 16px;
+      border-bottom: black dashed 1px;
+      width: 100%;
+      height: 2rem;
+      line-height: 2rem;
+  }
   .contact_board{
       width: 95%;
       height: 30px;
       background-color: whitesmoke;
       line-height: 30px;
+      font-size: 15px;
   }
   .contact_phone{
       width: 95%;
       text-align: left;
       margin: 5px;
+      font-size: 15px;
   }
 
 
