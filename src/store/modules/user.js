@@ -7,7 +7,8 @@ const getDefaultState = () => {
         token: '',
         openid: '',
         avatar: '',
-        link_id: undefined
+        link_id: undefined,
+        user_id: undefined,
     }
 }
 
@@ -28,6 +29,9 @@ const mutations = {
     },
     SET_LINK: (state, link_id) => {
         state.link_id = link_id
+    },
+    SET_USERID: (state, user_id) => {
+        state.user_id = user_id
     }
 }
 
@@ -56,6 +60,12 @@ const actions = {
     setLinkId({ commit }, link_id) {
         return new Promise(resolve => {
             commit('SET_LINK', link_id)
+            resolve()
+        })
+    },
+    setUserId({ commit }, user_id) {
+        return new Promise(resolve => {
+            commit('SET_USERID', user_id)
             resolve()
         })
     },

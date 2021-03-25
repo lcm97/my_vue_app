@@ -99,8 +99,9 @@
 
 <script>
 import { fetchCompanybyLink} from '@/api/company'
-import { fetchCoursebyComName} from '@/api/course'
-import { Dialog } from 'vant';
+import { fetchCoursebyComName, refreshCourse} from '@/api/course'
+import { joinGroup, openGroup} from '@/api/group'
+import { Dialog, Notify } from 'vant';
 export default {
   name: 'Register',
   data () {
@@ -120,6 +121,12 @@ export default {
             company:'',//机构
             course:'',//项目
             price:undefined,//需要支付
+            group_id: undefined,
+            openid: undefined,
+            status: undefined,
+            user_id: undefined,
+            link_id: undefined,
+            avatar: undefined,
         },
         formState:{
             showAges: false,
@@ -141,9 +148,11 @@ export default {
           }else{
               this.formState.map = '立即开团'
           }
-          console.log(this.$route.query.group_id)
-          console.log(this.$store.getters.openid)
-          console.log(this.$store.getters.link_id)
+          this.state.group_id = this.$route.query.group_id
+          this.state.openid = this.$store.getters.openid
+          this.state.link_id = this.$store.getters.link_id
+          this.state.user_id = this.$store.getters.user_id
+          this.state.avatar = this.$store.getters.avatar
       },
       getCompanyList(){
         //this.link_id = 0
@@ -195,12 +204,18 @@ export default {
                         console.log('支付成功')
                         //判断是参团还是建团
                         if(this.$route.query.group_id){ //参团
-                            console.log(this.$route.query.group_id)
-                            
-
-
-                        }else{
-
+                            this.state.status = '已付款'
+                            joinGroup(this.state).then(response=>{
+                                console.log(response.data)
+                                Notify('参团成功');
+                            })
+                        }else{ //开团
+                            this.state.status = '已付款'
+                            console.log(this.state)
+                            openGroup(this.state).then(response=>{
+                                console.log(response.data)
+                                Notify('开团成功');
+                            })
                         }
 
                     })

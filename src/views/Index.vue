@@ -43,7 +43,8 @@
         </div>
 
         <!--橙色分割条-->
-        <div class="orange_line"></div>
+        <div v-if="group_id" class="group_info" ></div>
+        <div v-else class="orange_line"></div>
 
         <!--组团信息-->
         <div class="group_board">
@@ -223,7 +224,7 @@
 <script>
 import { fetchCompanybyLink} from '@/api/company'
 import { fetchCoursebyLink } from '@/api/course'
-import { fetchGroupList } from '@/api/group'
+import { fetchGroupList,infoGroup } from '@/api/group'
 import { fetchWelfareList} from '@/api/welfare'
 import { isNumber} from '@/utils/validate'
 import { findorCreate} from '@/api/user'
@@ -270,6 +271,8 @@ export default {
       company_list:[],
       showDialog: false,
 
+      group_id: undefined,
+
     }
   },
   components: {},
@@ -289,17 +292,23 @@ export default {
         var userInfo = {
             openid: '123',
             avatar: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
+            link_id: 0
         }
         findorCreate(userInfo).then(response =>{
             var [user, created] = response.data
-            console.log(user)
-            console.log(created)
+            this.$store.dispatch('user/setUserId', user.id)
+            //console.log(user)
+            if(user.group_id){
+                infoGroup(user.group_id).then(response=>{
+                    console.log(response)
+                    this.group_id = response.data.id
+                })
+            }
         })
 
         let link_id = 0
         this.$store.dispatch('user/setInfo', userInfo)
         this.$store.dispatch('user/setLinkId', link_id)
-
     },
     getGroupList(){
         fetchGroupList(this.groupQuery).then(response => {
@@ -450,6 +459,9 @@ export default {
     background-color: #03060b;
     border-radius: 10%;
     margin-right:3px ;
+  }
+  .group_info{
+      
   }
   .orange_line{
       height: 24px;
