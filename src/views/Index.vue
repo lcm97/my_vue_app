@@ -21,7 +21,7 @@
         <div class="num_board">
             <div style="font-size:13px;">浏览量：{{view_num}}</div>
             <div style="font-size:13px;">团购人数：{{bulk_num}}</div>
-            <div style="font-size:13px;">成团数量：{{group_num}}</div>
+            <div style="font-size:13px;">成团数量：{{total}}</div>
             <div style="font-size:13px;">分享：{{share_num}}</div>
         </div>
 
@@ -43,8 +43,44 @@
         </div>
 
         <!--橙色分割条-->
-        <div v-if="group_id" class="group_info" ></div>
+        <div v-if="groupInfo.group_id" class="group_info" >
+            <div class="info_up1">
+                <div class="info_avatar">
+                    <van-badge content="团长" color="#fd7f2a" :offset=[5,7] >
+                    <van-image
+                    round
+                    width="62px"
+                    height="62px"
+                    fit="cover"
+                    lazy-load
+                    :src="groupInfo.avatar"
+                    />
+                    </van-badge>
+                    <div style="font-size:15px">{{groupInfo.cap_name}}</div>
+                </div>
+                <div class="info_right">
+                    <div style="font-size:13px;margin-bottom:5px">开团时间：{{groupInfo.created_at}}</div>
+                    <div class="tag">
+                        <span style="color:red;margin-left:10px;margin-right:10px;font-weight:bold">{{groupInfo.cap_name}}</span>邀您一起来拼团 
+                    </div>
+
+                </div>
+            </div>
+            <div style="font-size:13px;margin:10px">感谢诸位大侠帮助，团长泪流满面</div>
+            <div class="share_button" @click="updateShareState">分享海报</div>
+        </div>
         <div v-else class="orange_line"></div>
+
+        <van-popup v-model:show="showShare">
+            <van-image
+            width="300"
+            height="300"
+            fit="cover"
+            lazy-load
+            src="https://img.yzcdn.cn/vant/cat.jpeg"
+            />
+        </van-popup>
+
 
         <!--组团信息-->
         <div class="group_board">
@@ -70,10 +106,10 @@
                             <div style="font-size:13px">团号：{{item.id}}</div>
                         </div>
                         <div class="info_down">
-                            已参团{{item.num}}人,还差2人进阶成3人团
+                            已参团{{item.num}}人,还差{{item.diff_num}}人进阶成{{item.next_type}}人团
                         </div>
                     </div>
-                    <div class="button_right" v-on:click="joinGroup(item)">去参团</div>
+                    <div v-if="item.num<10" class="button_right" v-on:click="joinGroup(item)">去参团</div>
                  </div>
 
              </div>
@@ -116,10 +152,10 @@
                             <div style="font-size:13px">团号：{{item.id}}</div>
                         </div>
                         <div class="info_down">
-                            已参团{{item.num}}人,还差2人进阶成3人团
+                            已参团{{item.num}}人,还差{{item.diff_num}}人进阶成{{item.next_type}}人团
                         </div>
                     </div>
-                    <div class="button_right" v-on:click="joinGroup(item)">去参团</div>
+                    <div v-if="item.num<10" class="button_right" v-on:click="joinGroup(item)">去参团</div>
                  </div>
 
              </div>
@@ -227,7 +263,8 @@ import { fetchCoursebyLink } from '@/api/course'
 import { fetchGroupList,infoGroup } from '@/api/group'
 import { fetchWelfareList} from '@/api/welfare'
 import { isNumber} from '@/utils/validate'
-import { findorCreate} from '@/api/user'
+import { findorCreate,getbulknum} from '@/api/user'
+import { updateViews,updateShares} from '@/api/links'
 export default {
   name: 'Index',
   data () {
@@ -250,7 +287,6 @@ export default {
       search_val: undefined,
       total: 0,
       page_count: 12,
-      msg: '这是我的第一个VUE网页',
       isplay: false,
       images: [
         'https://img01.yzcdn.cn/vant/apple-1.jpg',
@@ -258,10 +294,10 @@ export default {
         'https://img01.yzcdn.cn/vant/apple-3.jpg',
         'https://img01.yzcdn.cn/vant/apple-4.jpg'
       ],
-      view_num: 4088, // 浏览量
-      bulk_num: 248, // 团购人数
+      view_num: undefined, // 浏览量
+      bulk_num: undefined, // 团购人数
       group_num: 99, // 成团数量
-      share_num: 297, // 分享数量
+      share_num: undefined, // 分享数量
 
       time_diff: 30 * 60 * 60 * 1000, // 倒计时间差
 
@@ -270,8 +306,15 @@ export default {
       welfare_list:[],
       company_list:[],
       showDialog: false,
+      showShare: false,
 
-      group_id: undefined,
+      
+      groupInfo:{
+         group_id: undefined,
+         avatar: undefined,
+         cap_name: undefined,
+         created_at: undefined
+      }
 
     }
   },
@@ -286,6 +329,8 @@ export default {
         this.getCourseList()
         this.getCompanyList()
         this.getWelfareList()
+        this.getLinkViews()
+        this.getBulkNum()
   },
   methods: {
     setUserInfo(){
@@ -300,8 +345,11 @@ export default {
             //console.log(user)
             if(user.group_id){
                 infoGroup(user.group_id).then(response=>{
-                    console.log(response)
-                    this.group_id = response.data.id
+                    //console.log(response)
+                    this.groupInfo.group_id = response.data.id
+                    this.groupInfo.avatar = response.data.avatar
+                    this.groupInfo.cap_name = response.data.cap_name
+                    this.groupInfo.created_at = response.data.created_at
                 })
             }
         })
@@ -313,6 +361,7 @@ export default {
     getGroupList(){
         fetchGroupList(this.groupQuery).then(response => {
             this.group_list = response.data.items 
+            //console.log(response.data.items )
             this.total = response.data.total
             this.page_count = Math.ceil(this.total / 5)
         })    
@@ -334,6 +383,26 @@ export default {
     getWelfareList(){
         fetchWelfareList().then(response =>{
             this.welfare_list = response.data.items
+        })
+    },
+    getLinkViews(){
+        this.link_id = 0
+        updateViews(this.link_id).then(response=>{
+            this.view_num = response.data.item.views
+            this.share_num = response.data.item.shares
+        })
+    },
+    updateShareState(){
+        this.showShare=true
+        this.link_id = 0
+        updateShares(this.link_id).then(response=>{
+            this.share_num = response.data.item.shares
+        })
+    },
+    getBulkNum(){
+        this.link_id = 1
+        getbulknum(this.link_id).then(response=>{
+            this.bulk_num = response.data.total
         })
     },
     onSearch(val){
@@ -461,7 +530,65 @@ export default {
     margin-right:3px ;
   }
   .group_info{
-      
+      margin: 10px;
+      background-color: #feda01;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-around;
+  }
+  .info_up1{
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: center;
+      width: 100%;
+  }
+  .info_avatar{
+      margin-top: 15px;
+      margin-left: 20px;
+  }
+  .info_right{
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: flex-start;
+      margin-left: 25px;
+  }
+  .tag{
+      position: relative;
+      height: 55px;
+      width: 220px;
+      background-color: white;
+      border-radius: 5px;
+      border: 1px black solid;
+      line-height: 40px;
+      text-align: left;
+      font-size: 14px;
+  }
+  .tag::before,.tag::after{
+      content: "";
+      display: block;
+      position: absolute;
+      right: 220px;
+      top: 10px;
+      border-width: 13px;
+      border-style: solid dashed dashed;
+      border-color: transparent black transparent transparent;
+
+  }
+  .tag::after{
+      right: 219px;
+      border-color: transparent white transparent transparent;
+  }
+  .share_button{
+      height: 2rem;
+      width: 10rem;
+      line-height: 2rem;
+      color: cornsilk;
+      font-size: 15px;
+      background-color: #fd7f2a;
+      margin: 10px ;
   }
   .orange_line{
       height: 24px;
@@ -643,7 +770,7 @@ export default {
       height: 25px;
       background-color: white;
       border: 1px black solid;
-      border-radius: 12%;
+      border-radius: 5px;
 
   }
   .blue_line{

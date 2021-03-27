@@ -7,3 +7,11 @@ export function findorCreate(query) {
         params: query
     })
 }
+
+export function getbulknum(link_id) {
+    return request({
+        url: '/user/count',
+        method: 'get',
+        params: { link_id }
+    })
+}

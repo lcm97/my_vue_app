@@ -156,16 +156,21 @@ export default {
       },
       getCompanyList(){
         //this.link_id = 0
-        fetchCompanybyLink(this.$store.getters.link_id).then(response => {
-            this.company_list = response.data.items 
-            this.state.company = response.data.items[0].name //默认取第一个
-            let query = {link_id:this.$store.getters.link_id,company:this.state.company}
-            fetchCoursebyComName(query).then(response=>{
-                this.course_list = response.data.items 
-                this.state.course = this.course_list[0].name
-                this.state.price = this.course_list[0].price
-            })
-        })    
+        if(this.$store.getters.link_id==undefined){
+            this.$router.push({ name: 'Index', })
+        }else{
+            fetchCompanybyLink(this.$store.getters.link_id).then(response => {
+                this.company_list = response.data.items 
+                this.state.company = response.data.items[0].name //默认取第一个
+                let query = {link_id:this.$store.getters.link_id,company:this.state.company}
+                fetchCoursebyComName(query).then(response=>{
+                    this.course_list = response.data.items 
+                    this.state.course = this.course_list[0].name
+                    this.state.price = this.course_list[0].price
+                })
+            })    
+        }
+
     },
       onAgeConfirm(val){
           this.state.age = val
