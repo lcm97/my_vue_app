@@ -33,12 +33,13 @@
             :rules="[{ required: true, message: '请选择年龄' }]"
             @click="formState.showAges = true"
         />
+
         <van-popup v-model:show="formState.showAges" position="bottom">
         <van-picker
             :columns="ages"
             @confirm="onAgeConfirm"
             @cancel="formState.showAges = false"
-            :default-index="20"
+            :default-index="8"
         />
         </van-popup>
         <van-field name="radio" label="请选择类型" >
@@ -81,8 +82,31 @@
                 >{{item.name}}
                 </van-radio>
             </van-radio-group>
+
             <div class="price_info">微信支付：<span style="color:red;">{{state.price}}元</span></div>
         </div>
+
+        <van-field
+            v-if="formState.is_grade=='是'"
+            v-model="state.grade"
+            readonly
+            clickable
+            name="picker"
+            label="年级"
+            label-width="3.2em"
+            placeholder="点击选择年级"
+            @click="formState.showGrades = true"
+        />
+        <van-popup v-model:show="formState.showGrades"  position="bottom">
+                <van-picker
+                    :columns="grades"
+                    @confirm="onGradeConfirm"
+                    @cancel="formState.showGrades = false"
+                    :default-index="3"
+                />
+        </van-popup>
+
+
         </van-form>
     </div>
     <div class="notes">注意：老学员只能开团，不能参团（参团会无效）
@@ -111,6 +135,8 @@ export default {
         '20','21','22','23','24','25','26','27','28','29',
         '30','31','32','33','34','35','36','37','38','39',
         '40','41','42','43','44','45','46','47','48','49','50'],
+        grades:['小班','中班','大班','一年级','二年级','三年级',
+        '四年级','五年级','六年级','初一','初二','初三','高一','高二','高三'],
         company_list:[],
         course_list:[],
         state:{
@@ -127,9 +153,13 @@ export default {
             user_id: undefined,
             link_id: undefined,
             avatar: undefined,
+            grade: '',
+            
         },
         formState:{
             showAges: false,
+            is_grade: '否',
+            showGrades: false,
             showCompany: false,
             map:''
         },
@@ -167,6 +197,7 @@ export default {
                     this.course_list = response.data.items 
                     this.state.course = this.course_list[0].name
                     this.state.price = this.course_list[0].price
+                    this.formState.is_grade = this.course_list[0].is_grade
                 })
             })    
         }
@@ -175,6 +206,10 @@ export default {
       onAgeConfirm(val){
           this.state.age = val
           this.formState.showAges = false
+      },
+      onGradeConfirm(val){
+          this.state.grade = val
+          this.formState.showGrades = false
       },
       onCompanyConfirm(val){
           this.state.company = val.name
@@ -185,6 +220,7 @@ export default {
                 this.course_list = response.data.items 
                 this.state.course = this.course_list[0].name
                 this.state.price = this.course_list[0].price
+                this.formState.is_grade = this.course_list[0].is_grade
           })
 
       },
@@ -194,7 +230,8 @@ export default {
       onCourseChange(item){
           this.state.course = item.name
           this.state.price = item.price
-
+          this.formState.is_grade = item.is_grade
+          console.log(this.formState.is_grade)
       },
       toIndex(){
           this.$router.push({ name: 'Index', })

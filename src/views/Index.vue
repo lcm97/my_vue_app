@@ -1,4 +1,7 @@
 <template>
+    <van-overlay :show="showloading" z-index=30 class="loading">
+        <van-loading type="spinner"  size="38" color="#4699f5" vertical>加载中...</van-loading>
+    </van-overlay>
     <div>
         <!--轮播图-->
         <van-swipe :autoplay="3000" indicator-color="white" lazy-render>
@@ -10,7 +13,7 @@
         <!--右上角按钮-->
         <div class="buttons">
             <div v-bind:class="[isplay?'on':'off']" v-on:click="playmusic">
-                <audio loop="loop" src="http://localhost:3000/upload/1615022619274n.mp3" id="music" preload="auto"></audio>
+                <audio loop="loop" src="http://119.29.14.113:3000/upload/1615022619274n.mp3" id="music" preload="auto"></audio>
             </div> <!--音乐播放按钮 默认关闭-->
             <div class="button"><span>活动<br>玩法</span></div>
             <div class="button"><span>联系<br>机构</span></div>
@@ -41,6 +44,25 @@
                 </template>
             </van-count-down>
         </div>
+
+        <!--气泡轮播-->
+        <transition-group name="bubble" tag="ul" v-if="bubbles.length>0">
+            <li v-for="(index, i) in list" :key="index" class="bubble_items">
+                <div class="bubble_item">
+                    <van-image
+                    style="opacity:1"
+                        round
+                        width="2rem"
+                        height="2rem"
+                        fit="cover"
+                        :src="bubbles[i].avatar"
+                        />
+                    <div style="font-size: 14px;margin: 5px;color: #dfbe08;">{{ bubbles[i].cap_name }}</div>
+                    <div style="font-size: 14px;margin: 5px;color: white;">开团成功</div>
+                </div>
+                
+            </li>
+        </transition-group>
 
         <!--橙色分割条-->
         <div v-if="groupInfo.group_id" class="group_info" >
@@ -77,7 +99,7 @@
             height="300"
             fit="cover"
             lazy-load
-            src="https://img.yzcdn.cn/vant/cat.jpeg"
+            :src="poster"
             />
         </van-popup>
 
@@ -186,10 +208,10 @@
                     <div class="middle_info2">
                         <div class="course_name">{{item.name}}</div>
                         <div class="course_class">{{item.class}}</div>
+                        <span class="origin_price">原价:¥{{item.ori_price}}</span>
                         <div class="prices">
                             <span class="price_board">现价</span>
                             <span class="price">¥{{item.price}}</span>
-                            <span class="origin_price">¥{{item.ori_price}}</span>
                         </div>
                         <div class="button_bottom" @click="openGroup(item)">立即开团</div>
                     </div>
@@ -248,11 +270,22 @@
         <div class="wave wave3"></div>
 
         <!--快速招生联系-->
-        <div class="contact">
+        <div class="contact" @click="showContact=true">
              <van-icon name="service" color="#f7c320"/>
              <div style="margin-left:5px;color:#f9ffff">快速招生联系</div>
-             <div style="margin-left:5px;color:#f7c320">一键钟琴</div>
+             <div style="margin-left:5px;color:#f7c320">广在线</div>
         </div>
+
+        
+        <van-popup v-model:show="showContact">
+            <van-image
+            width="19rem"
+            height="30rem"
+            fit="cover"
+            lazy-load
+            :src="contact"
+            />
+        </van-popup>
 
     </div>
 </template>
@@ -269,6 +302,7 @@ export default {
   name: 'Index',
   data () {
     return {
+      showloading: false,
       listQuery: {
             page: 1,
             limit: 10,
@@ -280,7 +314,7 @@ export default {
             page: 1,
             limit: 5,
             cap_name: undefined,
-            cap_id: undefined,
+            id: undefined,
             link_id: undefined,
       },
       link_id: undefined,
@@ -299,14 +333,18 @@ export default {
       group_num: 99, // 成团数量
       share_num: undefined, // 分享数量
 
+      poster: '', //分享海报url
+      contact: '', //联系人二维码url
+
       time_diff: 30 * 60 * 60 * 1000, // 倒计时间差
 
-      group_list: [], // 使用computer属性计算进阶还需参团人数
+      group_list: [], 
       course_list:[],
       welfare_list:[],
       company_list:[],
       showDialog: false,
       showShare: false,
+      showContact: false,
 
       
       groupInfo:{
@@ -314,7 +352,12 @@ export default {
          avatar: undefined,
          cap_name: undefined,
          created_at: undefined
-      }
+      },
+
+      bubbles: [],
+      list: [0],
+      next: 1,
+    
 
     }
   },
@@ -323,6 +366,7 @@ export default {
 
   },
   created() {
+        this.showloading = true
         this.setUserInfo()
 
         this.getGroupList()
@@ -331,21 +375,31 @@ export default {
         this.getWelfareList()
         this.getLinkViews()
         this.getBulkNum()
+        this.showloading = false
+  },
+  mounted(){
+    setInterval(() => {
+        this.list.shift()
+        this.list.push(this.next++)
+        if(this.bubbles.length>0){
+            const out = this.bubbles.shift()
+            this.bubbles.push(out)
+        }
+    }, 3000)
+
   },
   methods: {
     setUserInfo(){
         var userInfo = {
             openid: '123',
             avatar: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-            link_id: 0
+            link_id: 1
         }
         findorCreate(userInfo).then(response =>{
             var [user, created] = response.data
             this.$store.dispatch('user/setUserId', user.id)
-            //console.log(user)
             if(user.group_id){
                 infoGroup(user.group_id).then(response=>{
-                    //console.log(response)
                     this.groupInfo.group_id = response.data.id
                     this.groupInfo.avatar = response.data.avatar
                     this.groupInfo.cap_name = response.data.cap_name
@@ -354,27 +408,29 @@ export default {
             }
         })
 
-        let link_id = 0
+        let link_id = 1
         this.$store.dispatch('user/setInfo', userInfo)
         this.$store.dispatch('user/setLinkId', link_id)
     },
     getGroupList(){
         fetchGroupList(this.groupQuery).then(response => {
             this.group_list = response.data.items 
-            //console.log(response.data.items )
+            this.group_list.forEach(v=>{
+                this.bubbles.push(v)
+            })
             this.total = response.data.total
             this.page_count = Math.ceil(this.total / 5)
         })    
     },
     getCourseList(){
-        this.link_id = 0
+        this.link_id = 1
         fetchCoursebyLink(this.link_id).then(response => {
             //console.log(response.data.items)
             this.course_list = response.data.items 
         })    
     },
     getCompanyList(){
-        this.link_id = 0
+        this.link_id = 1
         fetchCompanybyLink(this.link_id).then(response => {
             //console.log(response.data.items)
             this.company_list = response.data.items 
@@ -386,19 +442,23 @@ export default {
         })
     },
     getLinkViews(){
-        this.link_id = 0
+        this.link_id = 1
         updateViews(this.link_id).then(response=>{
+            //console.log(response)
             this.view_num = response.data.item.views
             this.share_num = response.data.item.shares
+            this.poster = response.data.item.poster
+            this.contact = response.data.item.contact
         })
     },
     updateShareState(){
         this.showShare=true
-        this.link_id = 0
+        this.link_id = 1
         updateShares(this.link_id).then(response=>{
             this.share_num = response.data.item.shares
         })
     },
+
     getBulkNum(){
         this.link_id = 1
         getbulknum(this.link_id).then(response=>{
@@ -407,7 +467,8 @@ export default {
     },
     onSearch(val){
         if(isNumber(val)){
-            this.groupQuery.cap_id = val
+            this.groupQuery.id = val
+            console.log(this.groupQuery.id)
         }else{
             this.groupQuery.cap_name = val
         }
@@ -416,7 +477,7 @@ export default {
     },
     onCancel(){
         this.groupQuery.cap_name = undefined
-        this.groupQuery.cap_id = undefined
+        this.groupQuery.id = undefined
         this.groupQuery.page = 1
         this.getGroupList() 
     },
@@ -446,6 +507,12 @@ export default {
 </script>
 
 <style>
+  .loading{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
   .van-swipe-item {
     width: 100%;
     height: 280px;
@@ -716,7 +783,7 @@ export default {
   }
   .course_item{
       width: 100%;
-      height: 130px;
+      height: 160px;
       display: flex;
       flex-direction: row;
       justify-content: space-around;
@@ -727,7 +794,7 @@ export default {
 
   .middle_info2{
       width: 53%;
-      height: 7rem;
+      height: 130px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -735,13 +802,15 @@ export default {
   }
   .course_name{
       font-size: 15px;
+      margin-bottom: 5px;
 
   }
   .course_class{
-      font-size: 11px;
+      font-size: 13px;
       color: gray;
   }
   .prices{
+      height: 23px;
       display: flex;
       flex-direction: row;
       justify-content: flex-start;
@@ -756,22 +825,25 @@ export default {
       border-radius: 15%;
   }
   .price{
-      font-size: 16px;
-      margin-left: 3px;
+      font-size: 17px;
+      margin-left: 8px;
+      line-height: 18px;
+      margin-top: 3px;
   }
   .origin_price{
-      font-size: 8px;
+      font-size: 13px;
       color: gray;
-      margin-left: 5px;
       text-decoration: line-through;
+      margin-top: 5px;
   }
   .button_bottom{
       width: 98%;
-      height: 25px;
+      height: 28px;
+      line-height: 28px;
       background-color: white;
       border: 1px black solid;
       border-radius: 5px;
-
+      margin-top: 8px;
   }
   .blue_line{
       height: 24px;
@@ -842,7 +914,43 @@ export default {
       font-size: 15px;
   }
 
+  li {
+    transition: all 1s;
+    display: block;
+  }
+  .bubble-enter {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  .bubble-leave-to {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  /* 这个看似无用，但必须加上 */
+  .bubble-leave-active {
+    position: fixed;
+  }
+  .bubble_items{
+      position: fixed;
+      left: 2%;
+      /* border: solid red 1px; */
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
 
+      z-index: 2;
+  }
+
+   .bubble_item{
+       display: flex;
+       flex: row;
+       justify-content: center;
+       align-items: center;
+       background-color: black;
+       opacity: 0.6;
+       border-radius: 2rem;
+   }
 
 
   .wave{

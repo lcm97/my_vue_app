@@ -51,11 +51,11 @@ service.interceptors.response.use(
 
         // if the custom code is not 20000, it is judged as an error.
         if (res.code !== 10000) {
-            Notify({
-                type: 'warning',
-                message: res.message || 'Error',
-                duration: 5 * 1000,
-            });
+            // Notify({
+            //     type: 'warning',
+            //     message: res.message || 'Error',
+            //     duration: 5 * 1000,
+            // });
 
             // 401: Illegal token; 50012: Other clients logged in; 50014: Token expired;
             // if (res.code === 401 || res.code === 50012 || res.code === 50014) {
