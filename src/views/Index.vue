@@ -4,7 +4,7 @@
     </van-overlay>
     <div>
         <!--轮播图-->
-        <van-swipe :autoplay="3000" indicator-color="white" lazy-render>
+        <van-swipe :autoplay="3000" indicator-color="white" >
             <van-swipe-item v-for="(image, index) in images" :key="index">
                 <img :src="image" height="280"/>
             </van-swipe-item>
@@ -322,12 +322,13 @@ export default {
       total: 0,
       page_count: 12,
       isplay: false,
-      images: [
-        'https://img01.yzcdn.cn/vant/apple-1.jpg',
-        'https://img01.yzcdn.cn/vant/apple-2.jpg',
-        'https://img01.yzcdn.cn/vant/apple-3.jpg',
-        'https://img01.yzcdn.cn/vant/apple-4.jpg'
-      ],
+    //   images: [
+    //     'https://img01.yzcdn.cn/vant/apple-1.jpg',
+    //     'https://img01.yzcdn.cn/vant/apple-2.jpg',
+    //     'https://img01.yzcdn.cn/vant/apple-3.jpg',
+    //     'https://img01.yzcdn.cn/vant/apple-4.jpg'
+    //   ],
+      images:[],
       view_num: undefined, // 浏览量
       bulk_num: undefined, // 团购人数
       group_num: 99, // 成团数量
@@ -336,7 +337,7 @@ export default {
       poster: '', //分享海报url
       contact: '', //联系人二维码url
 
-      time_diff: 30 * 60 * 60 * 1000, // 倒计时间差
+      time_diff: undefined, // 倒计时间差
 
       group_list: [], 
       course_list:[],
@@ -432,8 +433,12 @@ export default {
     getCompanyList(){
         this.link_id = 1
         fetchCompanybyLink(this.link_id).then(response => {
-            //console.log(response.data.items)
             this.company_list = response.data.items 
+            this.company_list.forEach(v=>{
+                //console.log(v.imglist[0])
+                this.images.push(v.imglist[0])
+            })
+
         })    
     },
     getWelfareList(){
@@ -449,7 +454,25 @@ export default {
             this.share_num = response.data.item.shares
             this.poster = response.data.item.poster
             this.contact = response.data.item.contact
+            this.deadline = response.data.item.deadline
+
+            if(this.deadline==''){
+                this.time_diff = 30 * 60 * 60 * 1000;
+            }else{
+                this.getTimeDiff(this.deadline)
+            }
         })
+    },
+    getTimeDiff(deadline){
+        //2021-04-01 04:46:53
+        var ddl = new Date(deadline.replace(/-/g, '/')).getTime();
+        var now = new Date().getTime();
+        if(ddl-now>0){
+            this.time_diff = ddl-now
+        }else{
+            this.time_diff = 30 * 60 * 60 * 1000;
+        }
+
     },
     updateShareState(){
         this.showShare=true
@@ -464,6 +487,7 @@ export default {
         getbulknum(this.link_id).then(response=>{
             this.bulk_num = response.data.total
         })
+        
     },
     onSearch(val){
         if(isNumber(val)){
