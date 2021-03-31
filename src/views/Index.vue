@@ -132,6 +132,7 @@
                         </div>
                     </div>
                     <div v-if="item.num<10" class="button_right" v-on:click="joinGroup(item)">去参团</div>
+                    <div v-else class="button_right2"></div>
                  </div>
 
              </div>
@@ -178,6 +179,7 @@
                         </div>
                     </div>
                     <div v-if="item.num<10" class="button_right" v-on:click="joinGroup(item)">去参团</div>
+                    <div v-else class="button_right2"></div>
                  </div>
 
              </div>
@@ -261,8 +263,8 @@
 
         </div>
         <!--立即开团按钮-->
-        <div class="open_group"></div>
-        <div class="open_group_button">立即开团</div>
+        <div class="open_group" ></div>
+        <div class="open_group_button" v-on:click="openGroup2">立即开团</div>
 
         <!--波浪效果-->
         <div class="wave wave1"></div>
@@ -392,7 +394,7 @@ export default {
   methods: {
     setUserInfo(){
         var userInfo = {
-            openid: '123',
+            openid: '680',
             avatar: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
             link_id: 1
         }
@@ -512,17 +514,22 @@ export default {
     },
 
     joinGroup(item){
-        console.log(item.id)
+        //console.log(item.id)
         this.$router.push({ 
             name: 'Register', 
             query: { group_id: item.id }
         })
     },
     openGroup(item){
-        console.log(item)
+        //console.log(item)
         this.$router.push({ 
             name: 'Register', 
             query: { course_id: item.id }
+        })
+    },
+    openGroup2(){
+        this.$router.push({ 
+            name: 'Register', 
         })
     }
   }
@@ -722,7 +729,7 @@ export default {
       border-bottom: black dashed 1px;
   }
   .middle_info{
-      width: 50%;
+      width: 51%;
       height: 40px;
       display: flex;
       flex-direction: column;
@@ -750,6 +757,16 @@ export default {
       background-color: white;
       border-radius: 10%;
       border: black solid 1px;
+  }
+  .button_right2{
+      width: 17%;
+      height: 40px;
+      font-size: 13px;
+      text-align: center;
+      line-height: 40px;
+      background-color: #feda02;
+      border-radius: 10%;
+      border: #feda02 solid 1px;
   }
   .open_group{
       position: fixed;
@@ -982,9 +999,9 @@ export default {
       bottom: 0;
       left: 0;
       width: 100%;
-      height: 90px;
+      height: 50px;
       background: url(../assets/svg.png);
-      background-size: 1200px 90px;
+      background-size: 1200px 50px;
   }
   .wave.wave1{
       animation: animate 7s linear infinite;

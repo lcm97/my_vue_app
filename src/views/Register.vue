@@ -95,6 +95,7 @@
             label="年级"
             label-width="3.2em"
             placeholder="点击选择年级"
+            :rules="[{ required: true, message: '请选择年级' }]"
             @click="formState.showGrades = true"
         />
         <van-popup v-model:show="formState.showGrades"  position="bottom">
@@ -243,20 +244,23 @@ export default {
                     message: '支付现金',
                     })
                     .then(() => {
-                        console.log('支付成功')
+                        //console.log('支付成功')
                         //判断是参团还是建团
                         if(this.$route.query.group_id){ //参团
                             this.state.status = '已付款'
                             joinGroup(this.state).then(response=>{
-                                console.log(response.data)
-                                Notify('参团成功');
+                                //console.log(response.data)
+                                Notify({type: 'success', message: '参团成功'})
+                                this.$router.push({ name: 'Index', })
+
                             })
                         }else{ //开团
                             this.state.status = '已付款'
-                            console.log(this.state)
+                            //console.log(this.state)
                             openGroup(this.state).then(response=>{
-                                console.log(response.data)
-                                Notify('开团成功');
+                                //console.log(response.data)
+                                Notify({type: 'success', message: '开团成功'});
+                                this.$router.push({ name: 'Index', })
                             })
                         }
 
