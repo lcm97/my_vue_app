@@ -298,8 +298,10 @@ import { fetchCoursebyLink } from '@/api/course'
 import { fetchGroupList,infoGroup } from '@/api/group'
 import { fetchWelfareList} from '@/api/welfare'
 import { isNumber} from '@/utils/validate'
-import { findorCreate,getbulknum} from '@/api/user'
+import { getUrlKey } from '@/utils/index'
+import { findorCreate,getbulknum,getUserInfo} from '@/api/user'
 import { updateViews,updateShares} from '@/api/links'
+import { Notify } from 'vant';
 export default {
   name: 'Index',
   data () {
@@ -324,13 +326,13 @@ export default {
       total: 0,
       page_count: 12,
       isplay: false,
-    //   images: [
-    //     'https://img01.yzcdn.cn/vant/apple-1.jpg',
-    //     'https://img01.yzcdn.cn/vant/apple-2.jpg',
-    //     'https://img01.yzcdn.cn/vant/apple-3.jpg',
-    //     'https://img01.yzcdn.cn/vant/apple-4.jpg'
-    //   ],
-      images:[],
+      images: [
+        'https://img01.yzcdn.cn/vant/apple-1.jpg',
+        'https://img01.yzcdn.cn/vant/apple-2.jpg',
+        'https://img01.yzcdn.cn/vant/apple-3.jpg',
+        'https://img01.yzcdn.cn/vant/apple-4.jpg'
+      ],
+      //images:[],
       view_num: undefined, // 浏览量
       bulk_num: undefined, // 团购人数
       group_num: 99, // 成团数量
@@ -369,16 +371,15 @@ export default {
 
   },
   created() {
-        this.showloading = true
-        this.setUserInfo()
-
-        this.getGroupList()
-        this.getCourseList()
-        this.getCompanyList()
-        this.getWelfareList()
-        this.getLinkViews()
-        this.getBulkNum()
-        this.showloading = false
+        this.initPage()
+        // this.showloading = true
+        // this.getCompanyList()
+        // this.getGroupList()
+        // this.getCourseList()
+        // this.getWelfareList()
+        // this.getLinkViews()
+        // this.getBulkNum()
+        // this.showloading = false
   },
   mounted(){
     setInterval(() => {
@@ -392,28 +393,78 @@ export default {
 
   },
   methods: {
-    setUserInfo(){
-        var userInfo = {
-            openid: '680',
-            avatar: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
-            link_id: 1
-        }
-        findorCreate(userInfo).then(response =>{
-            var [user, created] = response.data
-            this.$store.dispatch('user/setUserId', user.id)
-            if(user.group_id){
-                infoGroup(user.group_id).then(response=>{
-                    this.groupInfo.group_id = response.data.id
-                    this.groupInfo.avatar = response.data.avatar
-                    this.groupInfo.cap_name = response.data.cap_name
-                    this.groupInfo.created_at = response.data.created_at
-                })
-            }
-        })
+    initPage(){
+        // console.log(this.$route.query.code) //从外部链接不能用router获取
+        this.showloading = true
 
-        let link_id = 1
-        this.$store.dispatch('user/setInfo', userInfo)
-        this.$store.dispatch('user/setLinkId', link_id)
+        let code = undefined
+        if(this.$store.getters.link_id){
+            this.link_id = this.$store.getters.link_id
+            //console.log(this.link_id)
+        }else{
+            this.link_id = parseInt(getUrlKey("state"))
+            code = getUrlKey("code")
+        }
+        //if(this.link_id == undefined){this.link_id = 1}
+        if(code){ //用户首次登录
+            this.$store.dispatch('user/setLinkId', this.link_id)
+            getUserInfo(code).then(response=>{
+                //console.log(response.data)
+                if(response.data.errcode){
+                    Notify({ type: 'warning', message: '用户登录出错，请退出浏览器重新登录' });
+                }else{
+                    var userInfo = {
+                        openid: response.data.openid,
+                        avatar: response.data.headimgurl,
+                        link_id: this.link_id
+                    }
+                    this.$store.dispatch('user/setInfo', userInfo)
+                    findorCreate(userInfo).then(response =>{
+                        var [user, created] = response.data
+                        this.$store.dispatch('user/setUserId', user.id)
+                        if(user.group_id){
+                            infoGroup(user.group_id).then(response=>{
+                                this.groupInfo.group_id = response.data.id
+                                this.groupInfo.avatar = response.data.avatar
+                                this.groupInfo.cap_name = response.data.cap_name
+                                this.groupInfo.created_at = response.data.created_at
+                            })
+                        }
+                    })
+                }
+
+            })
+        }else{ //由其它页面跳转
+            //Notify({ type: 'warning', message: '用户登录出错，请退出浏览器重新登录' });
+            //由vuex获取用户信息
+            //this.link_id = this.$store.getters.link_id
+            var userInfo = {
+                openid: this.$store.getters.openid,
+                avatar: this.$store.getters.avatar,
+                link_id: this.$store.getters.link_id
+            }
+            findorCreate(userInfo).then(response =>{
+                var [user, created] = response.data
+                this.$store.dispatch('user/setUserId', user.id)
+                if(user.group_id){
+                    infoGroup(user.group_id).then(response=>{
+                        this.groupInfo.group_id = response.data.id
+                        this.groupInfo.avatar = response.data.avatar
+                        this.groupInfo.cap_name = response.data.cap_name
+                        this.groupInfo.created_at = response.data.created_at
+                        })
+                    }
+            })            
+        }
+
+        this.getCompanyList()
+        this.getGroupList()
+        this.getCourseList()
+        this.getWelfareList()
+        this.getLinkViews()
+        this.getBulkNum()
+        this.showloading = false
+
     },
     getGroupList(){
         fetchGroupList(this.groupQuery).then(response => {
@@ -426,16 +477,17 @@ export default {
         })    
     },
     getCourseList(){
-        this.link_id = 1
+        //this.link_id = 1
         fetchCoursebyLink(this.link_id).then(response => {
             //console.log(response.data.items)
             this.course_list = response.data.items 
         })    
     },
     getCompanyList(){
-        this.link_id = 1
+        //this.link_id = 1
         fetchCompanybyLink(this.link_id).then(response => {
             this.company_list = response.data.items 
+            this.images = []
             this.company_list.forEach(v=>{
                 //console.log(v.imglist[0])
                 this.images.push(v.imglist[0])
@@ -449,7 +501,7 @@ export default {
         })
     },
     getLinkViews(){
-        this.link_id = 1
+        //this.link_id = 1
         updateViews(this.link_id).then(response=>{
             //console.log(response)
             this.view_num = response.data.item.views
@@ -478,14 +530,14 @@ export default {
     },
     updateShareState(){
         this.showShare=true
-        this.link_id = 1
+        //this.link_id = 1
         updateShares(this.link_id).then(response=>{
             this.share_num = response.data.item.shares
         })
     },
 
     getBulkNum(){
-        this.link_id = 1
+        //this.link_id = 1
         getbulknum(this.link_id).then(response=>{
             this.bulk_num = response.data.total
         })

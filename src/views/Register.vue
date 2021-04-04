@@ -127,6 +127,9 @@ import { fetchCompanybyLink} from '@/api/company'
 import { fetchCoursebyComName, refreshCourse} from '@/api/course'
 import { joinGroup, openGroup} from '@/api/group'
 import { Dialog, Notify } from 'vant';
+import { weixinPrePay} from '@/api/wxpay'
+import { buildMessage, sign } from '@/utils/sign'
+
 export default {
   name: 'Register',
   data () {
@@ -238,45 +241,141 @@ export default {
           this.$router.push({ name: 'Index', })
       },
       toPay(){
+          Notify({type: 'success', message: '1'});
             this.$refs['dataForm'].validate().then(()=>{
-                Dialog.confirm({
-                    title: '标题',
-                    message: '支付现金',
-                    })
-                    .then(() => {
-                        //console.log('支付成功')
-                        //判断是参团还是建团
-                        if(this.$route.query.group_id){ //参团
-                            this.state.status = '已付款'
-                            joinGroup(this.state).then(response=>{
-                                //console.log(response.data)
-                                Notify({type: 'success', message: '参团成功'})
-                                this.$router.push({ name: 'Index', })
+                //支付流程
+                //1 获取prepay_id
+                let description = 'Image形象店-深圳腾大-QQ公仔'
+                let price = 1
+                //let openid = this.$store.getters.openid
+                Notify({type: 'success', message: this.$store.getters.openid});
+                console.log(openid)
+                //let openid = "oFmbq6tgebRUxyWs750AEGPQJhaA"
+                let openid = undefined
+                let out_trade_no = parseInt(+new Date() / 1000 + '').toString()
+                let query_data = this.setPayConfig(description, price, openid, out_trade_no)
+                console.log(query_data)
+                weixinPrePay(query_data).then(response=>{
+                    if(response.statusCode==200){
+                        Notify({type: 'success', message: response.body.prepay_id});
+                        console.log(response.body.prepay_id)
+                        const prepay_id = response.body.prepay_id
+                        //2 按照签名规则进行签名计算
+                        const nonceStr = Math.random().toString(36).substr(2, 15), // 随机字符串
+                           timestamp = parseInt(+new Date() / 1000 + '').toString() // 时间戳 秒
+                        
+                        var message = buildMessage(timestamp, nonceStr, prepay_id)
+                        console.log(message)
+                        const paySign = sign(message)
+                        console.log(paySign)
 
-                            })
-                        }else{ //开团
-                            this.state.status = '已付款'
-                            //console.log(this.state)
-                            openGroup(this.state).then(response=>{
-                                //console.log(response.data)
-                                Notify({type: 'success', message: '开团成功'});
-                                this.$router.push({ name: 'Index', })
-                            })
+                        if (typeof WeixinJSBridge == "undefined"){
+                            if( document.addEventListener ){
+                                document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);
+                            }else if (document.attachEvent){
+                                document.attachEvent('WeixinJSBridgeReady', onBridgeReady); 
+                                document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);
+                            }
+                        }else{
+                            Notify({type: 'success', message: 'faqizhifu'});
+                            //3 发起支付
+                            WeixinJSBridge.invoke(
+                                'getBrandWCPayRequest', {
+                                    "appId":"wx9921568c91d3e0d1",     //公众号ID，由商户传入     
+                                    "timeStamp": timestamp,         //时间戳，自1970年以来的秒数     
+                                    "nonceStr": nonceStr, //随机串     
+                                    "package": "prepay_id="+prepay_id,     
+                                    "signType": "RSA",           
+                                    "paySign": paySign 
+                                },
+                                function(res){
+                                    Notify({type: 'success', message: '调用成功'+res.err_msg});
+                                if(res.err_msg == "get_brand_wcpay_request:ok" ){
+                                    Notify({type: 'success', message: '支付成功'});
+                                    // 使用以上方式判断前端返回,微信团队郑重提示：
+                                            //res.err_msg将在用户支付成功后返回ok，但并不保证它绝对可靠。
+                                }else{
+                                    Notify({type: 'danger', message: '支付失败'});
+                                } 
+                            }); 
                         }
 
-                    })
-                    .catch(() => {
+
+
+
+
+
+                    }else{
+                        Notify({type: 'danger', message: '提交订单失败'});
+                    }
+                }) 
+                .catch(err => {
                         // on cancel
                         console.log('支付失败')
+                        Notify({type: 'danger', message: err});
                 });
-            }).catch(()=>{
+
+
+                // Dialog.confirm({
+                //     title: '标题',
+                //     message: '支付现金',
+                //     })
+                //     .then(() => {
+                //         //console.log('支付成功')
+                //         //判断是参团还是建团
+                //         if(this.$route.query.group_id){ //参团
+                //             this.state.status = '已付款'
+                //             joinGroup(this.state).then(response=>{
+                //                 //console.log(response.data)
+                //                 Notify({type: 'success', message: '参团成功'})
+                //                 this.$router.push({ name: 'Index', })
+
+                //             })
+                //         }else{ //开团
+                //             this.state.status = '已付款'
+                //             //console.log(this.state)
+                //             openGroup(this.state).then(response=>{
+                //                 //console.log(response.data)
+                //                 Notify({type: 'success', message: '开团成功'});
+                //                 this.$router.push({ name: 'Index', })
+                //             })
+                //         }
+
+                //     })
+                //     .catch(() => {
+                //         // on cancel
+                //         console.log('支付失败')
+                // });
+
+
+
+            }).catch(err=>{
+                console.log(err)
+                Notify({type: 'danger', message: '生成订单失败'})
 
             })
 
       },
+      setPayConfig(description, price, openid, out_trade_no){
+            const query_data = {
+                appid: "wx9921568c91d3e0d1",
+                mchid: "1607853953",
+                description, //商品描述
+                out_trade_no, //生成订单号ToDo
+                notify_url: 'http://www.20gzx.com',
+                amount:{
+                    total:price*100, //单位为分
+                    currency: 'CNY',
+                },
+                payer:{
+                    openid:openid
+                }
+            }
+            return query_data
+      },
 
       onSubmit(val){
-          console.log(val)
+            console.log(val)
       }
 
   }

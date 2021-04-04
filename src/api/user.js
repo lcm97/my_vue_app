@@ -15,3 +15,12 @@ export function getbulknum(link_id) {
         params: { link_id }
     })
 }
+
+getUserInfo
+export function getUserInfo(code) {
+    return request({
+        url: '/user/getwxinfo',
+        method: 'get',
+        params: { code }
+    })
+}

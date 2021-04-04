@@ -10,10 +10,13 @@
   "dependencies": {
     "axios": "^0.21.1",
     "core-js": "^3.6.5",
+    "node-forge": "^0.10.0",
+    "superagent": "^6.1.0",
     "vant": "^3.0.7",
     "vue": "^3.0.0",
     "vue-router": "^4.0.0-0",
-    "vuex": "^4.0.0-0"
+    "vuex": "^4.0.0-0",
+    "wechatpay-node-v3": "^1.3.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
