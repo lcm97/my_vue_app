@@ -121,9 +121,11 @@ export function weixinPrePay(data) {
         .post('/api/v3/pay/transactions/jsapi')
         .send(data)
         .set({
-            Accept: 'application/json',
+            Accept: 'application/json;charset=utf-8;',
+            //Accept: '*/*',
+            'Accept-Language': 'zh-CN',
             'Content-Type': 'application/json',
-            //'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
             Authorization: authorization,
         });
     return result

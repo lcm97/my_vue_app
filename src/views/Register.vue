@@ -1,123 +1,129 @@
 <template>
-
-<div class="main">
-    <van-image width="100%" height="200" :src="require('../assets/comealong.png')" />
-    <!--表单-->
-    <div class="form">
-        <van-form ref="dataForm" >
-        <van-field
-            v-model="state.name"
-            name="姓名"
-            label="姓名"
-            placeholder="学员真实姓名"
-            label-width="3.2em"
-            :rules="[{ required: true, message: '请填写学员真实姓名' }]"
-        />
-        <van-field
-            v-model="state.phone"
-            type="tel"
-            name="电话"
-            label="电话"
-            label-width="3.2em"
-            placeholder="家长真实电话"
-            :rules="[{ required: true, message: '请填写家长真实电话' }]"
-        />
-        <van-field
-            v-model="state.age"
-            readonly
-            clickable
-            name="picker"
-            label="年龄"
-            label-width="3.2em"
-            placeholder="点击选择年龄"
-            :rules="[{ required: true, message: '请选择年龄' }]"
-            @click="formState.showAges = true"
-        />
-
-        <van-popup v-model:show="formState.showAges" position="bottom">
-        <van-picker
-            :columns="ages"
-            @confirm="onAgeConfirm"
-            @cancel="formState.showAges = false"
-            :default-index="8"
-        />
-        </van-popup>
-        <van-field name="radio" label="请选择类型" >
-        <template #input>
-            <van-radio-group v-model="state.identity" direction="horizontal" @change="onIdetityChange">
-            <van-radio name="新生">新生</van-radio>
-            <van-radio name="老生">老生</van-radio>
-            </van-radio-group>
-        </template>
-        </van-field>
-
-        <van-field
-            v-model="state.company"
-            readonly
-            clickable
-            name="机构"
-            label="选择机构"
-            placeholder="点击选择项目机构"
-            @click="formState.showCompany = true"
-        />
-        <van-popup v-model:show="formState.showCompany" position="bottom">
-            <van-picker
-                :columns="company_list"
-                :columns-field-names="{text:'name'}"
-                @confirm="onCompanyConfirm"
-                @cancel="formState.showCompany = false"
-            />
-        </van-popup>
-
-        <div class="course_items" >
-            <div
-             class="info"
-            >请选择报名课程</div>
-            <van-radio-group v-model="state.course" class="courses" >
-                <van-radio v-for="item in course_list" :key="item.id" 
-                :name="item.name" 
-                icon-size="15px" 
-                class="item"
-                @click="onCourseChange(item)"
-                >{{item.name}}
-                </van-radio>
-            </van-radio-group>
-
-            <div class="price_info">微信支付：<span style="color:red;">{{state.price}}元</span></div>
-        </div>
-
-        <van-field
-            v-if="formState.is_grade=='是'"
-            v-model="state.grade"
-            readonly
-            clickable
-            name="picker"
-            label="年级"
-            label-width="3.2em"
-            placeholder="点击选择年级"
-            :rules="[{ required: true, message: '请选择年级' }]"
-            @click="formState.showGrades = true"
-        />
-        <van-popup v-model:show="formState.showGrades"  position="bottom">
-                <van-picker
-                    :columns="grades"
-                    @confirm="onGradeConfirm"
-                    @cancel="formState.showGrades = false"
-                    :default-index="3"
+    <van-overlay :show="showloading" z-index=30 class="loading">
+        <van-loading type="spinner"  size="38" color="#4699f5" vertical>加载中...</van-loading>
+    </van-overlay>
+    <div v-wechat-title="title">
+        <div class="main" >
+            <van-image width="100%" height="200" :src="require('../assets/comealong.png')" />
+            <!--表单-->
+            <div class="form">
+                <van-form ref="dataForm" >
+                <van-field
+                    v-model="state.name"
+                    name="姓名"
+                    label="姓名"
+                    placeholder="学员真实姓名"
+                    label-width="3.2em"
+                    :rules="[{ required: true, message: '请填写学员真实姓名' }]"
                 />
-        </van-popup>
+                <van-field
+                    v-model="state.phone"
+                    type="tel"
+                    name="电话"
+                    label="电话"
+                    label-width="3.2em"
+                    placeholder="家长真实电话"
+                    :rules="[{ required: true, message: '请填写家长真实电话' }]"
+                />
+                <van-field
+                    v-model="state.age"
+                    readonly
+                    clickable
+                    name="picker"
+                    label="年龄"
+                    label-width="3.2em"
+                    placeholder="点击选择年龄"
+                    :rules="[{ required: true, message: '请选择年龄' }]"
+                    @click="formState.showAges = true"
+                />
+
+                <van-popup v-model:show="formState.showAges" position="bottom">
+                <van-picker
+                    :columns="ages"
+                    @confirm="onAgeConfirm"
+                    @cancel="formState.showAges = false"
+                    :default-index="8"
+                />
+                </van-popup>
+                <van-field name="radio" label="请选择类型" >
+                <template #input>
+                    <van-radio-group v-model="state.identity" direction="horizontal" @change="onIdetityChange">
+                    <van-radio name="新生">新生</van-radio>
+                    <van-radio name="老生">老生</van-radio>
+                    </van-radio-group>
+                </template>
+                </van-field>
+
+                <van-field
+                    v-model="state.company"
+                    readonly
+                    clickable
+                    name="机构"
+                    label="选择机构"
+                    placeholder="点击选择项目机构"
+                    @click="formState.showCompany = true"
+                />
+                <van-popup v-model:show="formState.showCompany" position="bottom">
+                    <van-picker
+                        :columns="company_list"
+                        :columns-field-names="{text:'name'}"
+                        @confirm="onCompanyConfirm"
+                        @cancel="formState.showCompany = false"
+                    />
+                </van-popup>
+
+                <div class="course_items" >
+                    <div
+                    class="info"
+                    >请选择报名课程</div>
+                    <van-radio-group v-model="state.course" class="courses" >
+                        <van-radio v-for="item in course_list" :key="item.id" 
+                        :name="item.name" 
+                        icon-size="15px" 
+                        class="item"
+                        @click="onCourseChange(item)"
+                        >{{item.name}}
+                        </van-radio>
+                    </van-radio-group>
+
+                    <div class="price_info">微信支付：<span style="color:red;">{{state.price}}元</span></div>
+                </div>
+
+                <van-field
+                    v-if="formState.is_grade=='是'"
+                    v-model="state.grade"
+                    readonly
+                    clickable
+                    name="picker"
+                    label="年级"
+                    label-width="3.2em"
+                    placeholder="点击选择年级"
+                    :rules="[{ required: true, message: '请选择年级' }]"
+                    @click="formState.showGrades = true"
+                />
+                <van-popup v-model:show="formState.showGrades"  position="bottom">
+                        <van-picker
+                            :columns="grades"
+                            @confirm="onGradeConfirm"
+                            @cancel="formState.showGrades = false"
+                            :default-index="3"
+                        />
+                </van-popup>
 
 
-        </van-form>
+                </van-form>
+            </div>
+            <div class="notes">注意：老学员只能开团，不能参团（参团会无效）
+            ，新生开团参团皆可，新生老生报名既有效。
+            </div>
+        </div>
+        <div style="position: fixed;bottom: 0;width: 100%;display: flex;flex-direction: row;">
+            <div class="toindex" @click="toIndex">返回首页</div>
+            <div class="tojoin" @click="toPay">{{formState.map}}</div>
+        </div>
     </div>
-    <div class="notes">注意：老学员只能开团，不能参团（参团会无效）
-    ，新生开团参团皆可，新生老生报名既有效。
-    </div>
-</div>
-<div style="position: fixed;bottom: 0;width: 100%;display: flex;flex-direction: row;">
-    <div class="toindex" @click="toIndex">返回首页</div>
-    <div class="tojoin" @click="toPay">{{formState.map}}</div>
-</div>
+
+
 
     
 </template>
@@ -167,6 +173,8 @@ export default {
             showCompany: false,
             map:''
         },
+        title:'广在线',
+        showloading: false,
     }
   },
   components: {},
@@ -177,6 +185,9 @@ export default {
   },
   methods: {
       getGroupItem(){
+          if(this.$store.getters.title){
+              this.title = this.$store.getters.title
+          }
           if(this.$route.query.group_id){
               this.formState.map = '立即参团'
           }else{
@@ -218,7 +229,6 @@ export default {
       onCompanyConfirm(val){
           this.state.company = val.name
           this.formState.showCompany = false
-          //ToDo更新课程列表 根据link_id 和 课程名字来加载课程列表
           let query = {link_id:this.$store.getters.link_id,company:this.state.company}
             fetchCoursebyComName(query).then(response=>{
                 this.course_list = response.data.items 
@@ -241,33 +251,28 @@ export default {
           this.$router.push({ name: 'Index', })
       },
       toPay(){
-          Notify({type: 'success', message: '1'});
             this.$refs['dataForm'].validate().then(()=>{
+                this.showloading = true
                 //支付流程
                 //1 获取prepay_id
-                let description = 'Image形象店-深圳腾大-QQ公仔'
-                let price = 1
-                //let openid = this.$store.getters.openid
-                Notify({type: 'success', message: this.$store.getters.openid});
-                console.log(openid)
-                //let openid = "oFmbq6tgebRUxyWs750AEGPQJhaA"
-                let openid = undefined
                 let out_trade_no = parseInt(+new Date() / 1000 + '').toString()
-                let query_data = this.setPayConfig(description, price, openid, out_trade_no)
-                console.log(query_data)
+                let query_data = this.setPayConfig(
+                    this.state.course, //商品描述
+                    this.state.price,  //商品价格
+                    this.state.openid, //openid
+                    out_trade_no //订单号
+                )
+
+                //console.log(query_data)
                 weixinPrePay(query_data).then(response=>{
                     if(response.statusCode==200){
-                        Notify({type: 'success', message: response.body.prepay_id});
-                        console.log(response.body.prepay_id)
                         const prepay_id = response.body.prepay_id
                         //2 按照签名规则进行签名计算
                         const nonceStr = Math.random().toString(36).substr(2, 15), // 随机字符串
                            timestamp = parseInt(+new Date() / 1000 + '').toString() // 时间戳 秒
                         
                         var message = buildMessage(timestamp, nonceStr, prepay_id)
-                        console.log(message)
                         const paySign = sign(message)
-                        console.log(paySign)
 
                         if (typeof WeixinJSBridge == "undefined"){
                             if( document.addEventListener ){
@@ -277,8 +282,9 @@ export default {
                                 document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);
                             }
                         }else{
-                            Notify({type: 'success', message: 'faqizhifu'});
                             //3 发起支付
+                            this.showloading = false
+                            var that = this
                             WeixinJSBridge.invoke(
                                 'getBrandWCPayRequest', {
                                     "appId":"wx9921568c91d3e0d1",     //公众号ID，由商户传入     
@@ -289,20 +295,39 @@ export default {
                                     "paySign": paySign 
                                 },
                                 function(res){
-                                    Notify({type: 'success', message: '调用成功'+res.err_msg});
                                 if(res.err_msg == "get_brand_wcpay_request:ok" ){
-                                    Notify({type: 'success', message: '支付成功'});
-                                    // 使用以上方式判断前端返回,微信团队郑重提示：
-                                            //res.err_msg将在用户支付成功后返回ok，但并不保证它绝对可靠。
+                                    //用户支付成功
+                                    that.state.status = '已付款'
+                                    //判断是参团还是建团
+                                    if(that.$route.query.group_id){ //参团
+                                        joinGroup(that.state).then(response=>{
+                                            Notify({type: 'success', message: '参团成功'})
+                                            that.$router.push({ name: 'Index', })
+                                        })
+                                    }else{ //开团
+                                        openGroup(that.state).then(response=>{
+                                            Notify({type: 'success', message: '开团成功'});
+                                            that.$router.push({ name: 'Index', })
+                                        })
+                                    }
                                 }else{
-                                    Notify({type: 'danger', message: '支付失败'});
+                                    //用户支付失败
+                                    console.log(that.state)
+                                    that.state.status = '未付款'
+                                    if(that.$route.query.group_id){ //参团
+                                        joinGroup(that.state).then(response=>{
+                                            Notify({type: 'danger', message: '支付失败'})
+                                            that.$router.push({ name: 'Index', })
+                                        })
+                                    }else{ //开团
+                                        openGroup(that.state).then(response=>{
+                                            Notify({type: 'danger', message: '支付失败'});
+                                            that.$router.push({ name: 'Index', })
+                                        })
+                                    }
                                 } 
                             }); 
                         }
-
-
-
-
 
 
                     }else{
@@ -310,49 +335,15 @@ export default {
                     }
                 }) 
                 .catch(err => {
+                        //console.log(err)
                         // on cancel
-                        console.log('支付失败')
-                        Notify({type: 'danger', message: err});
+                        console.log('申请prepay_id出错')
+                        Notify({type: 'danger', message: '申请prepay_id出错'});
                 });
-
-
-                // Dialog.confirm({
-                //     title: '标题',
-                //     message: '支付现金',
-                //     })
-                //     .then(() => {
-                //         //console.log('支付成功')
-                //         //判断是参团还是建团
-                //         if(this.$route.query.group_id){ //参团
-                //             this.state.status = '已付款'
-                //             joinGroup(this.state).then(response=>{
-                //                 //console.log(response.data)
-                //                 Notify({type: 'success', message: '参团成功'})
-                //                 this.$router.push({ name: 'Index', })
-
-                //             })
-                //         }else{ //开团
-                //             this.state.status = '已付款'
-                //             //console.log(this.state)
-                //             openGroup(this.state).then(response=>{
-                //                 //console.log(response.data)
-                //                 Notify({type: 'success', message: '开团成功'});
-                //                 this.$router.push({ name: 'Index', })
-                //             })
-                //         }
-
-                //     })
-                //     .catch(() => {
-                //         // on cancel
-                //         console.log('支付失败')
-                // });
-
-
 
             }).catch(err=>{
                 console.log(err)
                 Notify({type: 'danger', message: '生成订单失败'})
-
             })
 
       },

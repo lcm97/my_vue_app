@@ -2,7 +2,7 @@
     <van-overlay :show="showloading" z-index=30 class="loading">
         <van-loading type="spinner"  size="38" color="#4699f5" vertical>加载中...</van-loading>
     </van-overlay>
-    <div>
+    <div v-wechat-title="title">
         <!--轮播图-->
         <van-swipe :autoplay="3000" indicator-color="white" >
             <van-swipe-item v-for="(image, index) in images" :key="index">
@@ -322,17 +322,18 @@ export default {
             link_id: undefined,
       },
       link_id: undefined,
+      title: '广在线招生',
       search_val: undefined,
       total: 0,
       page_count: 12,
       isplay: false,
-      images: [
-        'https://img01.yzcdn.cn/vant/apple-1.jpg',
-        'https://img01.yzcdn.cn/vant/apple-2.jpg',
-        'https://img01.yzcdn.cn/vant/apple-3.jpg',
-        'https://img01.yzcdn.cn/vant/apple-4.jpg'
-      ],
-      //images:[],
+    //   images: [
+    //     'https://img01.yzcdn.cn/vant/apple-1.jpg',
+    //     'https://img01.yzcdn.cn/vant/apple-2.jpg',
+    //     'https://img01.yzcdn.cn/vant/apple-3.jpg',
+    //     'https://img01.yzcdn.cn/vant/apple-4.jpg'
+    //   ],
+      images:[],
       view_num: undefined, // 浏览量
       bulk_num: undefined, // 团购人数
       group_num: 99, // 成团数量
@@ -372,14 +373,6 @@ export default {
   },
   created() {
         this.initPage()
-        // this.showloading = true
-        // this.getCompanyList()
-        // this.getGroupList()
-        // this.getCourseList()
-        // this.getWelfareList()
-        // this.getLinkViews()
-        // this.getBulkNum()
-        // this.showloading = false
   },
   mounted(){
     setInterval(() => {
@@ -407,11 +400,12 @@ export default {
         }
         //if(this.link_id == undefined){this.link_id = 1}
         if(code){ //用户首次登录
+            console.log('用户首次登录')
             this.$store.dispatch('user/setLinkId', this.link_id)
             getUserInfo(code).then(response=>{
-                //console.log(response.data)
                 if(response.data.errcode){
                     Notify({ type: 'warning', message: '用户登录出错，请退出浏览器重新登录' });
+                    this.showloading = false
                 }else{
                     var userInfo = {
                         openid: response.data.openid,
@@ -430,7 +424,9 @@ export default {
                                 this.groupInfo.created_at = response.data.created_at
                             })
                         }
+                        this.showloading = false
                     })
+                    
                 }
 
             })
@@ -438,6 +434,7 @@ export default {
             //Notify({ type: 'warning', message: '用户登录出错，请退出浏览器重新登录' });
             //由vuex获取用户信息
             //this.link_id = this.$store.getters.link_id
+            console.log('由其它页面跳转')
             var userInfo = {
                 openid: this.$store.getters.openid,
                 avatar: this.$store.getters.avatar,
@@ -446,6 +443,7 @@ export default {
             findorCreate(userInfo).then(response =>{
                 var [user, created] = response.data
                 this.$store.dispatch('user/setUserId', user.id)
+                this.showloading = false
                 if(user.group_id){
                     infoGroup(user.group_id).then(response=>{
                         this.groupInfo.group_id = response.data.id
@@ -453,18 +451,17 @@ export default {
                         this.groupInfo.cap_name = response.data.cap_name
                         this.groupInfo.created_at = response.data.created_at
                         })
-                    }
+                }
+                this.showloading = false
             })            
         }
 
+        this.getLinkViews()
         this.getCompanyList()
         this.getGroupList()
         this.getCourseList()
         this.getWelfareList()
-        this.getLinkViews()
         this.getBulkNum()
-        this.showloading = false
-
     },
     getGroupList(){
         fetchGroupList(this.groupQuery).then(response => {
@@ -485,6 +482,7 @@ export default {
     },
     getCompanyList(){
         //this.link_id = 1
+        this.showloading = true
         fetchCompanybyLink(this.link_id).then(response => {
             this.company_list = response.data.items 
             this.images = []
@@ -492,6 +490,7 @@ export default {
                 //console.log(v.imglist[0])
                 this.images.push(v.imglist[0])
             })
+            this.showloading = false
 
         })    
     },
@@ -510,6 +509,9 @@ export default {
             this.contact = response.data.item.contact
             this.deadline = response.data.item.deadline
 
+            this.$store.dispatch('user/setTitle', response.data.item.name)
+            this.title = response.data.item.name
+
             if(this.deadline==''){
                 this.time_diff = 30 * 60 * 60 * 1000;
             }else{
@@ -518,7 +520,6 @@ export default {
         })
     },
     getTimeDiff(deadline){
-        //2021-04-01 04:46:53
         var ddl = new Date(deadline.replace(/-/g, '/')).getTime();
         var now = new Date().getTime();
         if(ddl-now>0){

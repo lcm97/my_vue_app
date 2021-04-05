@@ -9,6 +9,7 @@ const getDefaultState = () => {
         avatar: '',
         link_id: undefined,
         user_id: undefined,
+        title: '',
     }
 }
 
@@ -32,24 +33,13 @@ const mutations = {
     },
     SET_USERID: (state, user_id) => {
         state.user_id = user_id
+    },
+    SET_TITLE: (state, title) => {
+        state.title = title
     }
 }
 
 const actions = {
-    // user login
-    // login({ commit }, userInfo) {
-    //     const { username, password } = userInfo
-    //     return new Promise((resolve, reject) => {
-    //         login({ username: username.trim(), password: password }).then(response => { //调用api接口
-    //             const { data } = response
-    //             commit('SET_TOKEN', data.token)
-    //             setToken(data.token)
-    //             resolve()
-    //         }).catch(error => {
-    //             reject(error)sd
-    //         })
-    //     })
-    // },
     setInfo({ commit }, userInfo) {
         return new Promise(resolve => {
             commit('SET_OPENID', userInfo.openid) //可以修改为openid
@@ -66,6 +56,12 @@ const actions = {
     setUserId({ commit }, user_id) {
         return new Promise(resolve => {
             commit('SET_USERID', user_id)
+            resolve()
+        })
+    },
+    setTitle({ commit }, title) {
+        return new Promise(resolve => {
+            commit('SET_TITLE', title)
             resolve()
         })
     },
