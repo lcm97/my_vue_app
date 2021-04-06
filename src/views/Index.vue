@@ -6,15 +6,20 @@
         <!--轮播图-->
         <van-swipe :autoplay="3000" indicator-color="white" >
             <van-swipe-item v-for="(image, index) in images" :key="index">
-                <img :src="image" height="280"/>
+                <!-- <img :src="image" height="280"/> -->
+                <van-image :src="image" height="280" lazy-load>
+                    <template v-slot:loading>
+                        <van-loading type="spinner" size="20" />
+                    </template>
+                </van-image>
             </van-swipe-item>
         </van-swipe>
 
         <!--右上角按钮-->
         <div class="buttons">
-            <div v-bind:class="[isplay?'on':'off']" v-on:click="playmusic">
-                <audio loop="loop" src="http://119.29.14.113:3000/upload/1615022619274n.mp3" id="music" preload="auto"></audio>
-            </div> <!--音乐播放按钮 默认关闭-->
+            <van-icon name="music" color="black" size="48" v-bind:class="[isplay?'on1':'off1']" v-on:click="playmusic">
+                <audio loop="loop" :src="this.music" id="music" preload="auto"></audio>
+            </van-icon>
             <div class="button"><span>活动<br>玩法</span></div>
             <div class="button"><span>联系<br>机构</span></div>
             <div class="button"><span>用户<br>投诉</span></div>
@@ -363,6 +368,8 @@ export default {
       bubbles: [],
       list: [0],
       next: 1,
+
+      music: '',
     
 
     }
@@ -387,7 +394,6 @@ export default {
   },
   methods: {
     initPage(){
-        // console.log(this.$route.query.code) //从外部链接不能用router获取
         this.showloading = true
 
         let code = undefined
@@ -398,13 +404,16 @@ export default {
             this.link_id = parseInt(getUrlKey("state"))
             code = getUrlKey("code")
         }
+        this.groupQuery.link_id = this.link_id
         //if(this.link_id == undefined){this.link_id = 1}
         if(code){ //用户首次登录
             console.log('用户首次登录')
             this.$store.dispatch('user/setLinkId', this.link_id)
             getUserInfo(code).then(response=>{
                 if(response.data.errcode){
-                    Notify({ type: 'warning', message: '用户登录出错，请退出浏览器重新登录' });
+                    let url = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx9921568c91d3e0d1&redirect_uri=http://www.20gzx.com&response_type=code&scope=snsapi_userinfo&state='+this.link_id+'#wechat_redirect'
+                    window.location.href = url
+                    //Notify({ type: 'warning', message: '用户登录出错，请退出浏览器重新登录' });
                     this.showloading = false
                 }else{
                     var userInfo = {
@@ -431,9 +440,6 @@ export default {
 
             })
         }else{ //由其它页面跳转
-            //Notify({ type: 'warning', message: '用户登录出错，请退出浏览器重新登录' });
-            //由vuex获取用户信息
-            //this.link_id = this.$store.getters.link_id
             console.log('由其它页面跳转')
             var userInfo = {
                 openid: this.$store.getters.openid,
@@ -464,6 +470,7 @@ export default {
         this.getBulkNum()
     },
     getGroupList(){
+        this.groupQuery.link_id = this.link_id
         fetchGroupList(this.groupQuery).then(response => {
             this.group_list = response.data.items 
             this.group_list.forEach(v=>{
@@ -484,12 +491,17 @@ export default {
         //this.link_id = 1
         this.showloading = true
         fetchCompanybyLink(this.link_id).then(response => {
-            this.company_list = response.data.items 
+            this.company_list = response.data.items
+            console.log(this.company_list)
             this.images = []
+            //let temp_list = []
             this.company_list.forEach(v=>{
-                //console.log(v.imglist[0])
-                this.images.push(v.imglist[0])
+                var that = this
+                v.imglist.forEach(j=>{
+                    that.images.push(j)
+                })
             })
+            console.log(this.images)
             this.showloading = false
 
         })    
@@ -503,6 +515,7 @@ export default {
         //this.link_id = 1
         updateViews(this.link_id).then(response=>{
             //console.log(response)
+            this.music = response.data.item.music
             this.view_num = response.data.item.views
             this.share_num = response.data.item.shares
             this.poster = response.data.item.poster
@@ -517,6 +530,8 @@ export default {
             }else{
                 this.getTimeDiff(this.deadline)
             }
+            // this.isplay = true
+            // document.getElementById('music').play()
         })
     },
     getTimeDiff(deadline){
@@ -561,8 +576,8 @@ export default {
         this.getGroupList() 
     },
     playmusic: function (event) {
-      this.isplay = !this.isplay
-      const m = document.getElementById('music')
+        this.isplay = !this.isplay
+        const m = document.getElementById('music')
        	this.isplay ? m.play() : m.pause()
     },
 
@@ -618,7 +633,6 @@ export default {
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      border: blue solid 1px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -628,19 +642,15 @@ export default {
       opacity: 0.5;
       margin-bottom: 10px;
   }
-  .on{
-      width: 44px;
-      height: 44px;
-      background: url('../assets/music_on.png') no-repeat 0 0;
+  .on1{
       -webkit-animation: rotating 2s linear infinite;
       animation: rotating 2s linear infinite;
       margin-bottom: 10px;
+      opacity: 0.5;
   }
-  .off{
-      width: 44px;
-      height: 44px;
-      background: url('../assets/music_off.png') no-repeat 0 0;
+  .off1{
       margin-bottom: 10px;
+      opacity: 0.5;
   }
   .num_board{
       width: 100%;
