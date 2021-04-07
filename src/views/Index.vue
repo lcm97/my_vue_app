@@ -20,9 +20,9 @@
             <van-icon name="music" color="black" size="48" v-bind:class="[isplay?'on1':'off1']" v-on:click="playmusic">
                 <audio loop="loop" :src="this.music" id="music" preload="auto"></audio>
             </van-icon>
-            <div class="button"><span>活动<br>玩法</span></div>
-            <div class="button"><span>联系<br>机构</span></div>
-            <div class="button"><span>用户<br>投诉</span></div>
+            <div class="button"  @click="showRules = true"><span>活动<br>玩法</span></div>
+            <div class="button"  @click="showRules = true"><span>联系<br>机构</span></div>
+            <div class="button" @click="userComplain"><span>用户<br>投诉</span></div>
         </div>
 
         <!--页面数量统计-->
@@ -98,13 +98,63 @@
         </div>
         <div v-else class="orange_line"></div>
 
+        <!--分享海报-->
         <van-popup v-model:show="showShare">
             <van-image
             width="300"
             height="300"
-            fit="cover"
+            fit="contain"
             lazy-load
             :src="poster"
+            />
+        </van-popup>
+
+        <!--活动规则-->
+        <van-popup v-model:show="showRules">
+            <div>活动规则</div>
+
+        </van-popup>
+ 
+        <!--用户投诉-->
+        <van-popup v-model:show="showComplain"
+            closeable
+            close-icon-position="top-left"
+            :style="{ width: '98%' }">
+            <van-form style="height:300px;padding-top:70px" ref="complainForm">
+                <van-field
+                    v-model="complain.content"
+                    rows="3"
+                    autosize
+                    label="投诉内容"
+                    type="textarea"
+                    maxlength="400"
+                    placeholder="请输入文字"
+                    :rules="[{ required: true, message: '请填写内容' }]"
+                    show-word-limit
+                />
+                <van-field
+                    v-model="complain.contact"
+                    name="联系方式"
+                    label="联系方式"
+                    placeholder="请输入联系方式"
+                    :rules="[{ required: true, message: '请填写联系方式' }]"
+                />
+                <div style="margin: 16px;">
+                    <van-button round block type="primary" native-type="submit" v-on:click="submitComplain">
+                    提交
+                    </van-button>
+                </div>
+            </van-form>
+        </van-popup>
+
+
+        <van-popup v-model:show="showContact">
+            <van-image
+                width="19rem"
+                height="30rem"
+                fit="contain"
+                lazy-load
+                :src="contact"
             />
         </van-popup>
 
@@ -283,17 +333,6 @@
              <div style="margin-left:5px;color:#f7c320">广在线</div>
         </div>
 
-        
-        <van-popup v-model:show="showContact">
-            <van-image
-            width="19rem"
-            height="30rem"
-            fit="cover"
-            lazy-load
-            :src="contact"
-            />
-        </van-popup>
-
     </div>
 </template>
 
@@ -306,6 +345,7 @@ import { isNumber} from '@/utils/validate'
 import { getUrlKey } from '@/utils/index'
 import { findorCreate,getbulknum,getUserInfo} from '@/api/user'
 import { updateViews,updateShares} from '@/api/links'
+import { addComplain} from '@/api/complain'
 import { Notify } from 'vant';
 export default {
   name: 'Index',
@@ -356,13 +396,19 @@ export default {
       showDialog: false,
       showShare: false,
       showContact: false,
+      showComplain: false,
+      showRules:false,
 
-      
       groupInfo:{
          group_id: undefined,
          avatar: undefined,
          cap_name: undefined,
          created_at: undefined
+      },
+
+      complain:{
+          content: '',
+          contact: '',
       },
 
       bubbles: [],
@@ -492,16 +538,16 @@ export default {
         this.showloading = true
         fetchCompanybyLink(this.link_id).then(response => {
             this.company_list = response.data.items
-            console.log(this.company_list)
             this.images = []
             //let temp_list = []
             this.company_list.forEach(v=>{
                 var that = this
-                v.imglist.forEach(j=>{
-                    that.images.push(j)
+                v.imglist.forEach((j,index)=>{
+                    if(index==0){
+                        that.images.push(j)
+                    }
                 })
             })
-            console.log(this.images)
             this.showloading = false
 
         })    
@@ -549,6 +595,20 @@ export default {
         //this.link_id = 1
         updateShares(this.link_id).then(response=>{
             this.share_num = response.data.item.shares
+        })
+    },
+
+    userComplain(){
+        this.complain.contact = ''
+        this.complain.content = ''
+        this.showComplain = true
+    },
+    submitComplain(){
+        this.$refs['complainForm'].validate().then(()=>{
+            addComplain(this.complain).then(response=>{
+                Notify({ type: 'success', message: '提交成功' });
+                this.showComplain = false;
+            })
         })
     },
 
