@@ -21,7 +21,7 @@
                 <audio loop="loop" :src="this.music" id="music" preload="auto"></audio>
             </van-icon>
             <div class="button"  @click="showRules = true"><span>活动<br>玩法</span></div>
-            <div class="button"  @click="showRules = true"><span>联系<br>机构</span></div>
+            <div class="button"  @click="showContact=true"><span>联系<br>机构</span></div>
             <div class="button" @click="userComplain"><span>用户<br>投诉</span></div>
         </div>
 
@@ -110,8 +110,26 @@
         </van-popup>
 
         <!--活动规则-->
-        <van-popup v-model:show="showRules">
-            <div>活动规则</div>
+        <van-popup v-model:show="showRules" :style="{ width: '98%' }">
+            <div class="rules">
+                <van-divider :style="{ color: '#1989fa', borderColor: '#1989fa', padding: '0 16px', font:'20px', margin:'10px'}" content-position="center">
+                    报名流程
+                </van-divider>
+                <div style="font-size:13px;margin:5px;text-align:left">1. 打开链接，点击“立即开团”</div>
+                <div style="font-size:13px;margin:5px;text-align:left">2. 选择项目开团，填写姓名电话</div>  
+                <div style="font-size:13px;margin:5px;text-align:left">3. 提交报名，完成线上支付预定名额</div> 
+                <div style="font-size:13px;margin:5px;text-align:left">4. 点击右上角三个小点，选择分享给好友、微信群或朋友圈</div>  
+                <van-divider :style="{ color: '#1989fa', borderColor: '#1989fa', padding: '0 16px', font:'20px', margin:'10px'}" content-position="center">
+                    注意事项
+                </van-divider>
+                <div style="font-size:13px;margin:5px;text-align:left">1. 老生只可以开团当团长，不可参团做团员（参团无效）</div>
+                <div style="font-size:13px;margin:5px;text-align:left">2. 老生开团不成功，线下退还开团费用，新生报名即有效</div>
+                <div style="font-size:13px;margin:5px;text-align:left">3. 老学员拼团成功后课程在原有课程上叠加，不限时间上完</div>
+                <div style="font-size:13px;margin:5px;text-align:left">4. 所以机构课程混合参团，分开上课。现在上体验课的算老生。咨询过，没有长期缴费都为新生，均可直接开团当团长或者参团当团员，老生报名新科目也算新生。</div>
+                <div style="font-size:13px;margin:5px;text-align:left">5. 所有成功报名的新学员需在通知上课后2个月有效</div>
+                <div style="font-size:13px;margin:5px;text-align:left">6. 新生报名即有效，所有新生报名成功后不得转让，不予退费</div>
+                <div style="font-size:13px;margin:5px;text-align:left">7. 报名链接限定一个微信号只能报一个科目，报名第二科目需要用到另外一个微信号</div>
+            </div>
 
         </van-popup>
  
@@ -1056,6 +1074,13 @@ export default {
       border: black dashed 1px;
       margin-bottom: 15px;
 
+  }
+  .rules{
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      align-items: flex-start;
+      width: 100%;
   }
   .company_name{
       font-size: 16px;
