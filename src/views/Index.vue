@@ -7,11 +7,12 @@
         <van-swipe :autoplay="3000" indicator-color="white" >
             <van-swipe-item v-for="(image, index) in images" :key="index">
                 <!-- <img :src="image" height="280"/> -->
-                <van-image :src="image" height="280" lazy-load>
+                <img v-lazy="image" height="280" v-on:click="imagePreview(image)" />
+                <!-- <van-image :src="image" height="280" lazy-load>
                     <template v-slot:loading>
                         <van-loading type="spinner" size="20" />
                     </template>
-                </van-image>
+                </van-image> -->
             </van-swipe-item>
         </van-swipe>
 
@@ -279,6 +280,7 @@
                     fit="cover"
                     lazy-load
                     :src="item.img"
+                    v-on:click="imagePreview(item.img)"
                     />
                     <div class="middle_info2">
                         <div class="course_name">{{item.name}}</div>
@@ -307,7 +309,7 @@
                     <div style="margin:8px">{{item.describe}}</div>
                 </div>
                 <div class="welfare_imgs" v-for="(img,idx) in item.imglist" :key="idx">
-                    <van-image style="width:94%;margin-bottom:10px" fit="cover" lazy-load :src="img" />
+                    <van-image style="width:94%;margin-bottom:10px" fit="cover" lazy-load :src="img" v-on:click="imagePreview(img)" />
                 </div>
 
             </div>
@@ -324,13 +326,13 @@
                 <div class="company_name">{{item.name}}</div>
                 <span style="margin:10px;font-size:15px;text-align: left;">{{item.describe}}</span>
                 <div class="welfare_imgs" v-for="(img,idx) in item.imglist" :key="idx">
-                    <van-image style="width:94%;margin-bottom:10px" fit="cover" lazy-load :src="img" />
+                    <van-image style="width:94%;margin-bottom:10px" fit="cover" lazy-load :src="img" v-on:click="imagePreview(img)" />
                 </div>
                 <div class="contact_board">联系方式</div>
                 <div class="contact_phone">电话：{{item.phone}}</div>
                 <div class="contact_phone">地址：{{item.address}}</div>
                 <div class="welfare_imgs" v-for="(img,idx) in item.contacts" :key="idx">
-                    <van-image style="width:94%;margin-bottom:10px" fit="cover" lazy-load :src="img" />
+                    <van-image style="width:94%;margin-bottom:10px" fit="cover" lazy-load :src="img" v-on:click="imagePreview(img)"/>
                 </div>
             </div>
 
@@ -364,7 +366,7 @@ import { getUrlKey } from '@/utils/index'
 import { findorCreate,getbulknum,getUserInfo} from '@/api/user'
 import { updateViews,updateShares} from '@/api/links'
 import { addComplain} from '@/api/complain'
-import { Notify } from 'vant';
+import { Notify,ImagePreview } from 'vant';
 export default {
   name: 'Index',
   data () {
@@ -565,6 +567,19 @@ export default {
                         that.images.push(j)
                     }
                 })
+                //如果只有一个机构
+                if(that.images.length==1){
+                    that.images = []
+                    v.imglist.forEach((j,index)=>{
+                        that.images.push(j)
+                    })
+                }
+                //如果只有一个机构一张照片
+                // if(that.images.length==1){
+                //     v.imglist.forEach((j,index)=>{
+                //         that.images.push(j)
+                //     })
+                // }
             })
             this.showloading = false
 
@@ -657,6 +672,11 @@ export default {
         this.isplay = !this.isplay
         const m = document.getElementById('music')
        	this.isplay ? m.play() : m.pause()
+    },
+    imagePreview(url){
+        var imglist = []
+        imglist.push(url)
+        ImagePreview({images: imglist,closeable: true,})
     },
 
     joinGroup(item){
