@@ -87,3 +87,11 @@ export function fetchCoursebyComName(query) {
         params: query
     })
 }
+
+export function fetchCoursebyName(query) {
+    return request({
+        url: '/course/findonebyname',
+        method: 'get',
+        params: query
+    })
+}

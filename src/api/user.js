@@ -16,11 +16,18 @@ export function getbulknum(link_id) {
     })
 }
 
-getUserInfo
 export function getUserInfo(code) {
     return request({
         url: '/user/getwxinfo',
         method: 'get',
         params: { code }
+    })
+}
+
+export function updateUserStatus(data) {
+    return request({
+        url: '/user/updatestatus',
+        method: 'put',
+        data
     })
 }

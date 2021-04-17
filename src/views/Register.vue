@@ -245,7 +245,7 @@ export default {
           this.state.course = item.name
           this.state.price = item.price
           this.formState.is_grade = item.is_grade
-          console.log(this.formState.is_grade)
+          //console.log(this.formState.is_grade)
       },
       toIndex(){
           this.$router.push({ name: 'Index', })

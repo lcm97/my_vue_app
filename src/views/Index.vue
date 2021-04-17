@@ -19,7 +19,8 @@
         <!--右上角按钮-->
         <div class="buttons">
             <van-icon name="music" color="black" size="48" v-bind:class="[isplay?'on1':'off1']" v-on:click="playmusic">
-                <audio loop="loop" :src="this.music" id="music" preload="auto"></audio>
+                <!-- <audio loop="loop" :src="this.music" id="music" preload="auto"></audio> -->
+                <audio autoplay="autoplay" loop="true" :src="this.music" id="music" hidden="true"></audio>  
             </van-icon>
             <div class="button"  @click="showRules = true"><span>活动<br>玩法</span></div>
             <div class="button"  @click="showContact=true"><span>联系<br>机构</span></div>
@@ -358,15 +359,17 @@
 
 <script>
 import { fetchCompanybyLink} from '@/api/company'
-import { fetchCoursebyLink } from '@/api/course'
+import { fetchCoursebyLink,fetchCoursebyName } from '@/api/course'
 import { fetchGroupList,infoGroup } from '@/api/group'
 import { fetchWelfareList} from '@/api/welfare'
 import { isNumber} from '@/utils/validate'
 import { getUrlKey } from '@/utils/index'
-import { findorCreate,getbulknum,getUserInfo} from '@/api/user'
+import { findorCreate,getbulknum,getUserInfo,updateUserStatus} from '@/api/user'
 import { updateViews,updateShares} from '@/api/links'
 import { addComplain} from '@/api/complain'
-import { Notify,ImagePreview } from 'vant';
+import { Notify,ImagePreview,Dialog } from 'vant';
+import { weixinPrePay} from '@/api/wxpay'
+import { buildMessage, sign } from '@/utils/sign'
 export default {
   name: 'Index',
   data () {
@@ -391,13 +394,8 @@ export default {
       search_val: undefined,
       total: 0,
       page_count: 12,
-      isplay: false,
-    //   images: [
-    //     'https://img01.yzcdn.cn/vant/apple-1.jpg',
-    //     'https://img01.yzcdn.cn/vant/apple-2.jpg',
-    //     'https://img01.yzcdn.cn/vant/apple-3.jpg',
-    //     'https://img01.yzcdn.cn/vant/apple-4.jpg'
-    //   ],
+      isplay: true,
+
       images:[],
       view_num: undefined, // 浏览量
       bulk_num: undefined, // 团购人数
@@ -500,6 +498,95 @@ export default {
                             })
                         }
                         this.showloading = false
+
+                        if(user.status=='未付款'){
+                            let _company = user.company
+                            let _course = user.course
+                            Dialog.confirm({
+                                title: '提示',
+                                message: `您有一项课程未付款:\r\n机构名称： ${ _company }\r\n课程名称：${ _course } `,
+                                theme: 'round-button',
+                                confirmButtonText: '去支付'
+                            })
+                            .then(() => {
+                                //用户点击去支付
+                                this.showloading = true
+                                //1、获取课程价格
+                                fetchCoursebyName({link_id: this.link_id, name: _course}).then(response=>{
+                                    //console.log(response.data.price)
+                                    let out_trade_no = parseInt(+new Date() / 1000 + '').toString()
+                                    let query_data = this.setPayConfig(
+                                        response.data.name, //商品描述
+                                        response.data.price,  //商品价格
+                                        user.openid, //openid
+                                        out_trade_no //订单号
+                                    )
+                                    //console.log(query_data)
+                                    var course_id = response.data.id
+                                    weixinPrePay(query_data).then(response=>{
+                                        if(response.statusCode==200){
+                                            const prepay_id = response.body.prepay_id
+                                            //2 按照签名规则进行签名计算
+                                            const nonceStr = Math.random().toString(36).substr(2, 15), // 随机字符串
+                                            timestamp = parseInt(+new Date() / 1000 + '').toString() // 时间戳 秒
+                                            
+                                            var message = buildMessage(timestamp, nonceStr, prepay_id)
+                                            const paySign = sign(message)
+
+                                            if (typeof WeixinJSBridge == "undefined"){
+                                                if( document.addEventListener ){
+                                                    document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);
+                                                }else if (document.attachEvent){
+                                                    document.attachEvent('WeixinJSBridgeReady', onBridgeReady); 
+                                                    document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);
+                                                }
+                                            }else{
+                                                //3 发起支付
+                                                this.showloading = false
+                                                var that = this
+                                                var _course_id = course_id
+                                                
+                                                //console.log( `course_id${_course_id}`)
+                                                WeixinJSBridge.invoke(
+                                                    'getBrandWCPayRequest', {
+                                                        "appId":"wx9921568c91d3e0d1",     //公众号ID，由商户传入     
+                                                        "timeStamp": timestamp,         //时间戳，自1970年以来的秒数     
+                                                        "nonceStr": nonceStr, //随机串     
+                                                        "package": "prepay_id="+prepay_id,     
+                                                        "signType": "RSA",           
+                                                        "paySign": paySign 
+                                                    },
+                                                    function(res){
+                                                    if(res.err_msg == "get_brand_wcpay_request:ok" ){
+                                                        let _userid = that.$store.getters.user_id
+                                                        let status = '已付款'
+                                                        //更新用户的支付状态
+                                                        updateUserStatus({id:_userid, status:status, course_id: _course_id}).then(response=>{
+                                                            Notify({type: 'success', message: '支付成功'})
+                                                        })
+                                                    }else{
+                                                        //console.log('用户支付失败')
+                                                        Notify({type: 'danger', message: '支付失败'})
+                                                    } 
+                                                }); 
+                                            }
+                                        }else{
+                                            Notify({type: 'danger', message: '提交订单失败'});
+                                        }
+                                }) 
+
+
+
+                                })
+
+                            })
+                            .catch(() => {
+                                //用户点击取消
+                                // on cancel
+                            });
+                        }
+
+
                     })
                     
                 }
@@ -697,7 +784,25 @@ export default {
         this.$router.push({ 
             name: 'Register', 
         })
-    }
+    },
+    //处理未付款
+    setPayConfig(description, price, openid, out_trade_no){
+            const query_data = {
+                appid: "wx9921568c91d3e0d1",
+                mchid: "1607853953",
+                description, //商品描述
+                out_trade_no, //生成订单号ToDo
+                notify_url: 'http://www.20gzx.com',
+                amount:{
+                    total:price*100, //单位为分
+                    currency: 'CNY',
+                },
+                payer:{
+                    openid:openid
+                }
+            }
+            return query_data
+      },
   }
 }
 
