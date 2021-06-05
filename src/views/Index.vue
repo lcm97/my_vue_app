@@ -3,6 +3,16 @@
         <van-loading type="spinner"  size="38" color="#4699f5" vertical>加载中...</van-loading>
     </van-overlay>
     <div v-wechat-title="title">
+
+        <!--雪花飘落效果-->
+        <div class="fallingLeaves">
+        <span><van-icon name="star" color="gold" class="star" /></span>
+        <span><van-icon name="star" color="#1989fa" class="star" /></span>
+        <span><van-icon name="star" color="#a3cf62" class="star" /></span>
+        <span><van-icon name="star" color="red" class="star" /></span>
+        <span><van-icon name="star" color="#694d9f" class="star" /></span>
+        <span><van-icon name="star" color="#f58220" class="star" /></span>
+        </div>
         <!--轮播图-->
         <van-swipe :autoplay="3000" indicator-color="white" >
             <van-swipe-item v-for="(image, index) in images" :key="index">
@@ -1350,4 +1360,156 @@ export default {
         transform: rotate(360deg);
     }
 }
+
+.fallingLeaves {
+  text-align: center;
+  /* display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%; */
+}
+.fallingLeaves span {
+  /* display:inline-block; */
+  opacity: 0;
+  animation: mysnow 10s infinite linear;
+  -webkit-animation: mysnow 10s infinite linear;
+  -moz-animation: mysnow 10s infinite linear;
+  -ms-animation: mysnow 10s infinite linear;
+  -o-animation: mysnow 10s infinite linear;
+  /* margin: -280px 40px 54px -34px; */
+  z-index: 20;
+}
+
+.fallingLeaves span:nth-child(1) {
+  position: absolute;
+  right: 25%;
+  animation-delay: 1.3s;
+  -webkit-animation-delay: 1.3s;
+  -moz-animation-delay: 1.3s;
+  -ms-animate-delay: 1.3s;
+  -o-animation: 1.3s;
+}
+.fallingLeaves span:nth-child(2) {
+  position: absolute;
+  right: 45%;
+  animation-delay: 9.5s;
+  -webkit-animation-delay: 9.5s;
+  -moz-animation-delay: 9.5s;
+  -ms-animate-delay: 9.5s;
+  -o-animation: 9.5s;
+}
+.fallingLeaves span:nth-child(3) {
+  position: absolute;
+  right: 69%;
+  animation-delay: 4.7s;
+  -webkit-animation-delay: 4.7s;
+  -moz-animation-delay: 4.7s;
+  -ms-animate-delay: 4.7s;
+  -o-animation: 4.7s;
+}
+.fallingLeaves span:nth-child(4) {
+  position: absolute;
+  right: 76%;
+  animation-delay: 5.3s;
+  -webkit-animation-delay: 5.3s;
+  -moz-animation-delay: 5.3s;
+  -ms-animate-delay: 5.3s;
+  -o-animation: 5.3s;
+}
+.fallingLeaves span:nth-child(5) {
+  position: absolute;
+  right: 86%;
+  animation-delay: 2.7s;
+  -webkit-animation-delay: 2.7s;
+  -moz-animation-delay: 2.7s;
+  -ms-animate-delay: 2.7s;
+  -o-animation: 2.7s;
+}
+.fallingLeaves span:nth-child(6) {
+  position: absolute;
+  right: 6%;
+  animation-delay: 2.3s;
+  -webkit-animation-delay: 2.3s;
+  -moz-animation-delay: 2.3s;
+  -ms-animate-delay: 2.3s;
+  -o-animation: 2.3s;
+}
+
+@keyframes mysnow {
+  0% {
+    bottom: 100%;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+    transform: rotate(1080deg);
+  }
+  100% {
+    transform: rotate(0deg);
+    opacity: 0;
+    bottom: 0;
+  }
+}
+@-webkit-keyframes mysnow {
+  0% {
+    bottom: 100%;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+    -webkit-transform: rotate(1080deg);
+  }
+  100% {
+    -webkit-transform: rotate(0deg);
+    opacity: 0;
+    bottom: 0;
+  }
+}
+@-moz-keyframes mysnow {
+  0% {
+    bottom: 100%;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+    -moz-transform: rotate(1080deg);
+  }
+  100% {
+    -moz-transform: rotate(0deg);
+    opacity: 0;
+    bottom: 0;
+  }
+}
+@-ms-keyframes mysnow {
+  0% {
+    bottom: 100%;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+    -ms-transform: rotate(1080deg);
+  }
+  100% {
+    -ms-transform: rotate(0deg);
+    opacity: 0;
+    bottom: 0;
+  }
+}
+@-o-keyframes mysnow {
+  0% {
+    bottom: 100%;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+    -o-transform: rotate(1080deg);
+  }
+  100% {
+    -o-transform: rotate(0deg);
+    opacity: 0;
+    bottom: 0;
+  }
+}
+
 </style>
