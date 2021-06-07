@@ -31,3 +31,10 @@ export function updateUserStatus(data) {
         data
     })
 }
+
+export function getSdkTicket() {
+    return request({
+        url: '/user/getticket',
+        method: 'get'
+    })
+}

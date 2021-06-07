@@ -1,6 +1,7 @@
 module.exports = {
     //pabulicPath: process.env.NODE_ENV === 'production' ? '' : '',
     devServer: {
+        disableHostCheck: true, //本地测试时使用
         host: '0.0.0.0',
         port: '8080',
         // https:false,

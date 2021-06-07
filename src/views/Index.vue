@@ -374,12 +374,15 @@ import { fetchGroupList,infoGroup } from '@/api/group'
 import { fetchWelfareList} from '@/api/welfare'
 import { isNumber} from '@/utils/validate'
 import { getUrlKey } from '@/utils/index'
-import { findorCreate,getbulknum,getUserInfo,updateUserStatus} from '@/api/user'
+import { findorCreate,getbulknum,getUserInfo,updateUserStatus,getSdkTicket} from '@/api/user'
 import { updateViews,updateShares} from '@/api/links'
 import { addComplain} from '@/api/complain'
-import { Notify,ImagePreview,Dialog } from 'vant';
+import { Notify,ImagePreview,Dialog } from 'vant'
 import { weixinPrePay} from '@/api/wxpay'
 import { buildMessage, sign } from '@/utils/sign'
+import wx from 'weixin-js-sdk'
+import sha1 from "crypto-js/sha1"
+
 export default {
   name: 'Index',
   data () {
@@ -400,7 +403,7 @@ export default {
             link_id: undefined,
       },
       link_id: undefined,
-      title: '广在线招生',
+      title: '广在线快速招生',
       search_val: undefined,
       total: 0,
       page_count: 12,
@@ -465,7 +468,10 @@ export default {
         }
     }, 3000)
 
+    this.wxJsSDKConfig()
+    
   },
+
   methods: {
     initPage(){
         this.showloading = true
@@ -632,6 +638,37 @@ export default {
         this.getWelfareList()
         this.getBulkNum()
     },
+    wxJsSDKConfig(){
+        let noncestr = Math.random().toString(36).substr(2, 15);
+        let timestamp = parseInt(+new Date() / 1000 + '').toString();
+        //let url = encodeURIComponent(location.href.split('#')[0]);
+        let url = `${location.origin}${location.pathname}${location.search}`
+        console.log(url)
+        getSdkTicket().then(response=>{
+            let jsapi_ticket = response.data.ticket
+            let msg = `jsapi_ticket=${jsapi_ticket}&noncestr=${noncestr}&timestamp=${timestamp}&url=${url}`
+            let sig = sha1(msg).toString()
+            var that = this
+            //console.log(sig);
+
+            wx.config({
+                debug: false, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+                appId: 'wx9921568c91d3e0d1', // 必填，公众号的唯一标识
+                timestamp: timestamp, // 必填，生成签名的时间戳
+                nonceStr: noncestr, // 必填，生成签名的随机串
+                signature: sig,// 必填，签名
+                jsApiList: ['updateAppMessageShareData'] // 必填，需要使用的JS接口列表
+            });
+            wx.ready(function () {
+                wx.updateAppMessageShareData({
+                    title: '广在线快速招生', // 分享标题
+                    desc: that.title, // 分享描述
+                    link: window.location.href, // 分享链接
+                    imgUrl: that.images[0], // 分享图标
+                })
+            });
+        })
+    },
     getGroupList(){
         this.groupQuery.link_id = this.link_id
         fetchGroupList(this.groupQuery).then(response => {
@@ -656,27 +693,21 @@ export default {
         fetchCompanybyLink(this.link_id).then(response => {
             this.company_list = response.data.items
             this.images = []
-            //let temp_list = []
-            this.company_list.forEach(v=>{
+            this.company_list.forEach((v,com_idx)=>{
                 var that = this
-                v.imglist.forEach((j,index)=>{
-                    if(index==0){
-                        that.images.push(j)
-                    }
-                })
-                //如果只有一个机构
-                if(that.images.length==1){
-                    that.images = []
+                if(com_idx==0){ //第一个机构显示3张照片
                     v.imglist.forEach((j,index)=>{
-                        that.images.push(j)
+                        if(index<3){
+                            that.images.push(j)
+                        }
+                    })
+                }else{  //其他机构显示1张照片
+                    v.imglist.forEach((j,index)=>{
+                        if(index==0){
+                            that.images.push(j)
+                        }
                     })
                 }
-                //如果只有一个机构一张照片
-                // if(that.images.length==1){
-                //     v.imglist.forEach((j,index)=>{
-                //         that.images.push(j)
-                //     })
-                // }
             })
             this.showloading = false
 
