@@ -8,6 +8,14 @@ export function fetchGroupList(query) {
     })
 }
 
+export function fetchSortedGroupList(query) {
+    return request({
+        url: '/group/list_num_sort',
+        method: 'get',
+        params: query
+    })
+}
+
 export function removeGroup(data) {
     return request({
         url: '/group/remove',

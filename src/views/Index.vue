@@ -192,7 +192,7 @@
         <!--组团信息-->
         <div class="group_board">
              <!--搜索按钮-->
-             <div class="search_group" v-on:click="showDialog = true">
+             <div class="search_group" v-on:click="getGroupListNumSorted()">
                 <div style="font-size:15px;color:black;margin-right:5px">点击去搜索更多团</div>
                 <van-icon name="search" size="17" color="#4699f5"/>
              </div>
@@ -244,7 +244,7 @@
                     <div @click="onSearch(search_val)">搜索</div>
                 </template>
             </van-search>
-             <div class="group_items" v-for="item in group_list" :key="item.id">
+             <div class="group_items" v-for="item in group_list_sorted" :key="item.id">
                  <div class="group_item">
                     <van-image
                     round
@@ -269,7 +269,7 @@
 
              </div>
 
-             <van-pagination v-model="groupQuery.page" mode="simple" :page-count="page_count"  style="color:black" @change="getGroupList"/>
+             <van-pagination v-model="groupQuery.page" mode="simple" :page-count="page_count"  style="color:black" @change="getGroupListNumSorted"/>
             
 
         </van-dialog>
@@ -370,7 +370,7 @@
 <script>
 import { fetchCompanybyLink} from '@/api/company'
 import { fetchCoursebyLink,fetchCoursebyName } from '@/api/course'
-import { fetchGroupList,infoGroup } from '@/api/group'
+import { fetchGroupList,infoGroup,fetchSortedGroupList } from '@/api/group'
 import { fetchWelfareList} from '@/api/welfare'
 import { isNumber} from '@/utils/validate'
 import { getUrlKey } from '@/utils/index'
@@ -421,6 +421,7 @@ export default {
       time_diff: undefined, // 倒计时间差
 
       group_list: [], 
+      group_list_sorted: [],
       course_list:[],
       welfare_list:[],
       company_list:[],
@@ -661,8 +662,8 @@ export default {
             });
             wx.ready(function () {
                 wx.updateAppMessageShareData({
-                    title: '广在线快速招生', // 分享标题
-                    desc: that.title, // 分享描述
+                    title: that.title, // 分享标题
+                    desc: window.location.href, // 分享描述
                     link: window.location.href, // 分享链接
                     imgUrl: that.images[0], // 分享图标
                 })
@@ -680,6 +681,17 @@ export default {
             this.page_count = Math.ceil(this.total / 5)
         })    
     },
+
+    getGroupListNumSorted(){
+        this.showDialog = true
+        this.groupQuery.link_id = this.link_id
+        fetchSortedGroupList(this.groupQuery).then(response => {
+            this.group_list_sorted = response.data.items 
+            this.total = response.data.total
+            this.page_count = Math.ceil(this.total / 5)
+        })    
+    },
+
     getCourseList(){
         //this.link_id = 1
         fetchCoursebyLink(this.link_id).then(response => {
@@ -793,8 +805,8 @@ export default {
     onCancel(){
         this.groupQuery.cap_name = undefined
         this.groupQuery.id = undefined
-        this.groupQuery.page = 1
-        this.getGroupList() 
+        // this.groupQuery.page = 1
+        // this.getGroupList() 
     },
     playmusic: function (event) {
         this.isplay = !this.isplay
